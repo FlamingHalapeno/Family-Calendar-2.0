@@ -120,4 +120,6 @@ Internationalization (i18n)
 
   Refer to Expo's documentation for detailed information on Views, Blueprints, and Extensions for best practices.
 
+  IMPORTANT: Always use best practices, think 3 times before you implement changes, and use any documentation possible
+
     

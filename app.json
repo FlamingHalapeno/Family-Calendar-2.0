@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Family Calendar",
+    "slug": "family-calendar",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.familycalendar.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.familycalendar.app"
+    },
+    "platforms": ["ios", "android", "web"]
+  }
+} 

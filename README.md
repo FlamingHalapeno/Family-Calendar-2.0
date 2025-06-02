@@ -101,7 +101,7 @@ CREATE TRIGGER on_auth_user_created
 ### 4. Generate TypeScript Types (Optional)
 
 ```bash
-npx supabase gen types typescript --project-id YOUR_PROJECT_ID > lib/database.types.ts
+npx supabase gen types typescript --project-id vqfvqgaazdzghpnwkmps > lib/database.types.ts
 ```
 
 ### 5. Run the App

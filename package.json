@@ -1,6 +1,7 @@
 {
   "name": "family-calendar-2.0",
   "version": "1.0.0",
+  "type": "module",
   "description": "Family Calendar mobile app built with Expo and React Native",
   "main": "index.js",
   "scripts": {
@@ -32,6 +33,8 @@
   "homepage": "https://github.com/FlamingHalapeno/Family-Calendar-2.0#readme",
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.2",
+    "@react-navigation/drawer": "^7.4.1",
+    "@react-navigation/native": "^7.1.10",
     "@supabase/supabase-js": "^2.49.9",
     "@tanstack/react-query": "^5.79.2",
     "@types/react": "~19.0.10",
@@ -40,8 +43,13 @@
     "expo-secure-store": "^14.2.3",
     "react": "19.0.0",
     "react-native": "0.79.2",
+    "react-native-gesture-handler": "^2.25.0",
+    "react-native-reanimated": "3.17.4",
+    "react-native-safe-area-context": "^5.4.1",
+    "react-native-screens": "^4.11.1",
     "react-native-url-polyfill": "^2.0.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "expo-linear-gradient": "~14.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.27.4"

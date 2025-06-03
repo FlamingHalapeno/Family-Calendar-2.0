@@ -3,7 +3,7 @@
     "name": "Family Calendar",
     "slug": "family-calendar",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "userInterfaceStyle": "light",
     "splash": {
       "backgroundColor": "#ffffff"

@@ -23,4 +23,38 @@ export type AuthAction =
   | { type: 'LOGOUT' }
   | { type: 'SET_PROFILE'; profile: UserProfile | null }
   | { type: 'SET_LOADING'; isLoading: boolean }
-  | { type: 'SET_ERROR'; error: Error | null }; 
+  | { type: 'SET_ERROR'; error: Error | null };
+
+// Calendar Event Types
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  start_date: string; // ISO string
+  end_date: string; // ISO string
+  user_id?: string;
+  family_id?: string;
+  color?: string; // Hex color for the event
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type CalendarView = 'day' | 'week' | 'month';
+
+export interface CalendarState {
+  events: CalendarEvent[];
+  selectedDate: Date;
+  currentView: CalendarView;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export type EventFormData = Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>;
+
+export interface EventModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (event: EventFormData) => void;
+  initialDate?: Date;
+  editingEvent?: CalendarEvent;
+} 

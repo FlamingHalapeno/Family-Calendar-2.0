@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/FlamingHalapeno/Family-Calendar-2.0#readme",
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.1.2",
     "@supabase/supabase-js": "^2.49.9",
     "@tanstack/react-query": "^5.79.2",
     "@types/react": "~19.0.10",

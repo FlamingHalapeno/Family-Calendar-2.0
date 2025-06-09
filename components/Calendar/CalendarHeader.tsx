@@ -40,6 +40,7 @@ export function CalendarHeader({ selectedDate, currentView, onNavigate, onViewCh
       case 'month':
         options.year = 'numeric';
         options.month = 'long';
+        options.day = 'numeric';
         break;
     }
     

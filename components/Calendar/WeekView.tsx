@@ -41,6 +41,8 @@ export function WeekView({ selectedDate, events, onDatePress, onEventPress, user
   const [scrollState, setScrollState] = useState({
     canScrollLeft: false,
     canScrollRight: true,
+    canScrollUp: false,
+    canScrollDown: true,
   });
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -168,7 +170,22 @@ export function WeekView({ selectedDate, events, onDatePress, onEventPress, user
     const canScrollLeft = scrollX > 5;
     const canScrollRight = scrollX < contentWidth - layoutWidth - 5;
     
-    setScrollState({ canScrollLeft, canScrollRight });
+    setScrollState(prev => ({ 
+      ...prev, 
+      canScrollLeft, 
+      canScrollRight 
+    }));
+  };
+
+  const updateVerticalScrollState = (scrollY: number, contentHeight: number, layoutHeight: number) => {
+    const canScrollUp = scrollY > 5;
+    const canScrollDown = scrollY < contentHeight - layoutHeight - 5;
+    
+    setScrollState(prev => ({ 
+      ...prev, 
+      canScrollUp, 
+      canScrollDown 
+    }));
   };
 
   const onHeaderScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -197,6 +214,13 @@ export function WeekView({ selectedDate, events, onDatePress, onEventPress, user
     
     ignoreNextHeaderScroll.current = true;
     headerScrollViewRef.current?.scrollTo({ x: scrollX, animated: false });
+  };
+
+  const onVerticalScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const scrollY = contentOffset.y;
+    
+    updateVerticalScrollState(scrollY, contentSize.height, layoutMeasurement.height);
   };
 
   // Pinch gesture handler
@@ -263,7 +287,6 @@ export function WeekView({ selectedDate, events, onDatePress, onEventPress, user
                       styles.dayHeader,
                       { width: (width - baseTimeColumnWidth - 32) / 7 },
                       isCurrentDay && styles.todayHeader,
-                      isSelectedDay && styles.selectedHeader,
                     ]}
                     onPress={() => onDatePress?.(day)}
                     activeOpacity={0.7}
@@ -271,14 +294,12 @@ export function WeekView({ selectedDate, events, onDatePress, onEventPress, user
                     <Text style={[
                       styles.dayName,
                       isCurrentDay && styles.todayText,
-                      isSelectedDay && styles.selectedText,
                     ]}>
                       {weekDayNames[index]}
                     </Text>
                     <Text style={[
                       styles.dayNumber,
                       isCurrentDay && styles.todayText,
-                      isSelectedDay && styles.selectedText,
                     ]}>
                       {day.getDate()}
                     </Text>
@@ -318,6 +339,8 @@ export function WeekView({ selectedDate, events, onDatePress, onEventPress, user
               showsVerticalScrollIndicator={true}
               ref={verticalScrollViewRef}
               contentContainerStyle={{ height: hours.length * hourHeight, paddingTop: 15 }}
+              onScroll={onVerticalScroll}
+              scrollEventThrottle={16}
             >
               <Animated.View 
                 style={{ 
@@ -466,6 +489,28 @@ export function WeekView({ selectedDate, events, onDatePress, onEventPress, user
             pointerEvents="none"
           />
         )}
+
+        {/* Top scroll indicator */}
+        {scrollState.canScrollUp && (
+          <LinearGradient
+            colors={['rgba(0,0,0,0.1)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.topScrollIndicator}
+            pointerEvents="none"
+          />
+        )}
+
+        {/* Bottom scroll indicator */}
+        {scrollState.canScrollDown && (
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.1)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.bottomScrollIndicator}
+            pointerEvents="none"
+          />
+        )}
       </View>
     </View>
   );
@@ -514,9 +559,6 @@ const styles = StyleSheet.create({
   todayHeader: {
     backgroundColor: '#E3F2FD',
   },
-  selectedHeader: {
-    backgroundColor: '#007AFF',
-  },
   dayName: {
     fontSize: 18,
     fontWeight: '600',
@@ -530,9 +572,6 @@ const styles = StyleSheet.create({
   },
   todayText: {
     color: '#007AFF',
-  },
-  selectedText: {
-    color: '#fff',
   },
   eventIndicator: {
     position: 'absolute',
@@ -647,6 +686,22 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 20,
+    zIndex: 1,
+  },
+  topScrollIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 20,
+    zIndex: 1,
+  },
+  bottomScrollIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 20,
     zIndex: 1,
   },
 }); 

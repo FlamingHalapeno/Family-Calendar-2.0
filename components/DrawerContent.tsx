@@ -5,8 +5,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { DrawerContentScrollView, DrawerContentComponentProps } from '@react-navigation/drawer';
+import { useAuth } from '../providers/AuthProvider';
 
 interface DrawerItemProps {
   label: string;
@@ -30,6 +32,30 @@ function DrawerItem({ label, icon, onPress, isActive }: DrawerItemProps) {
 export function DrawerContent(props: DrawerContentComponentProps) {
   const { navigation, state } = props;
   const currentRoute = state.routes[state.index].name;
+  const { signOut, user } = useAuth();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            const { error } = await signOut();
+            if (error) {
+              Alert.alert('Error', 'Failed to sign out');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,6 +63,9 @@ export function DrawerContent(props: DrawerContentComponentProps) {
         <View style={styles.header}>
           <Text style={styles.title}>Family Calendar</Text>
           <Text style={styles.subtitle}>v2.0</Text>
+          {user?.email && (
+            <Text style={styles.userEmail}>{user.email}</Text>
+          )}
         </View>
         
         <View style={styles.menuItems}>
@@ -78,6 +107,13 @@ export function DrawerContent(props: DrawerContentComponentProps) {
           />
         </View>
       </DrawerContentScrollView>
+      
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutIcon}>🚪</Text>
+          <Text style={styles.logoutText}>Sign Out</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -105,6 +141,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#666',
+  },
+  userEmail: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
   },
   menuItems: {
     paddingVertical: 20,
@@ -140,5 +181,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9ecef',
     marginVertical: 10,
     marginHorizontal: 20,
+  },
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+    backgroundColor: '#fff',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 8,
+  },
+  logoutIcon: {
+    fontSize: 20,
+    marginRight: 15,
+    width: 24,
+    textAlign: 'center',
+  },
+  logoutText: {
+    fontSize: 16,
+    color: '#dc3545',
+    fontWeight: '500',
   },
 }); 

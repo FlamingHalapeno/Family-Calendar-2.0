@@ -23,10 +23,10 @@
     },
     "platforms": ["ios", "android", "web"],
     "extra": {
-      "supabaseUrl": "https://vqfvqgaazdzghpnwkmps.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZnZxZ2FhemR6Z2hwbndrbXBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4OTQ3MzcsImV4cCI6MjA2NDQ3MDczN30.FiNZ5xZ9iLit7ygzvEsMzY6ix_p9R6-7zuY68mDXouM",
+      "supabaseUrl": "https://isyihkdpnlrpzqojvtyl.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeWloa2RwbmxycHpxb2p2dHlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NDg1NzAsImV4cCI6MjA2NTIyNDU3MH0.uuc6evidDzuZH_w8stwtoJzBQNpKRGPQgmMkf9UYvTM",
       "eas": {
-        "projectId": "vqfvqgaazdzghpnwkmps"
+        "projectId": "isyihkdpnlrpzqojvtyl"
       }
     }
   }

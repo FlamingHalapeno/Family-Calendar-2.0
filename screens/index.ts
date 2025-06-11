@@ -1,5 +1,6 @@
 export { CalendarScreen } from './CalendarScreen';
-export { SettingsScreen } from './SettingsScreen';
-export { TasksScreen } from './TasksScreen';
+export { ContactsScreen } from './ContactsScreen';
+export { LoginScreen } from './LoginScreen';
 export { NotesScreen } from './NotesScreen';
-export { ContactsScreen } from './ContactsScreen'; 
+export { SettingsScreen } from './SettingsScreen';
+export { TasksScreen } from './TasksScreen'; 

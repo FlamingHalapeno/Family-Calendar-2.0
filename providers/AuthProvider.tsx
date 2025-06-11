@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   signOut: () => Promise<any>;
 }
 
@@ -50,10 +50,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { data, error };
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+        }
+      }
     });
     return { data, error };
   };

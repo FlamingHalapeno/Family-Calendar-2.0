@@ -8,11 +8,12 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ===================================
--- PROFILES TABLE
+-- USERS TABLE (formerly profiles)
 -- ===================================
 -- Store additional user profile information
-CREATE TABLE IF NOT EXISTS public.profiles (
+CREATE TABLE IF NOT EXISTS public.users (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT NOT NULL,
     first_name TEXT,
     last_name TEXT,
     avatar_url TEXT,
@@ -22,16 +23,16 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 -- Enable RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for profiles
-CREATE POLICY "Users can view their own profile" ON public.profiles
+-- RLS Policies for users
+CREATE POLICY "Users can view their own profile" ON public.users
     FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can update their own profile" ON public.profiles
+CREATE POLICY "Users can update their own profile" ON public.users
     FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Users can insert their own profile" ON public.profiles
+CREATE POLICY "Users can insert their own profile" ON public.users
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- ===================================
@@ -333,8 +334,8 @@ CREATE POLICY "Contact creators and family admins can delete contacts" ON public
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, first_name, last_name)
-    VALUES (NEW.id, NEW.raw_user_meta_data ->> 'first_name', NEW.raw_user_meta_data ->> 'last_name');
+    INSERT INTO public.users (id, email, first_name, last_name)
+    VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data ->> 'first_name', NEW.raw_user_meta_data ->> 'last_name');
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -355,7 +356,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Add updated_at triggers to all tables
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.profiles
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.families

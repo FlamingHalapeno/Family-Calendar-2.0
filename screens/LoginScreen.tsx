@@ -17,12 +17,19 @@ import { useAuth } from '../providers/AuthProvider';
 export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
 
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (isSignUp && (!firstName.trim() || !lastName.trim())) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -36,7 +43,7 @@ export function LoginScreen() {
 
     try {
       const { data, error } = isSignUp 
-        ? await signUp(email.trim(), password)
+        ? await signUp(email.trim(), password, firstName.trim(), lastName.trim())
         : await signIn(email.trim(), password);
 
       if (error) {
@@ -73,6 +80,36 @@ export function LoginScreen() {
             </View>
 
             <View style={styles.form}>
+              {isSignUp && (
+                <>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="First Name"
+                      placeholderTextColor="#rgba(255,255,255,0.7)"
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Last Name"
+                      placeholderTextColor="#rgba(255,255,255,0.7)"
+                      value={lastName}
+                      onChangeText={setLastName}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                    />
+                  </View>
+                </>
+              )}
+
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.input}

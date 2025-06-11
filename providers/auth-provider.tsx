@@ -2,7 +2,7 @@ import React, { createContext, useReducer, useEffect, ReactNode, Dispatch } from
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { AuthState, AuthAction, UserProfile } from '../types';
-import { getProfile } from '../services/profile-service';
+import { getUserProfile } from '../services/profile-service';
 
 const initialState: AuthState = {
   user: null,
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   useEffect(() => {
     const fetchUserAndProfile = async (user: User | null, session: Session | null) => {
       if (user) {
-        const userProfile = await getProfile(user.id);
+        const userProfile = await getUserProfile(user.id);
         dispatch({ type: 'INITIALIZE_AUTH', session, user, profile: userProfile });
       } else {
         dispatch({ type: 'INITIALIZE_AUTH', session: null, user: null, profile: null });
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
           // This check might be too simplistic if profile updates frequently outside auth events
           if (state.user?.id !== currentUser.id || !state.profile) {
             dispatch({ type: 'SET_LOADING', isLoading: true }); // Set loading before async profile fetch
-            userProfile = await getProfile(currentUser.id);
+            userProfile = await getUserProfile(currentUser.id);
           } else {
             userProfile = state.profile; // Use existing profile
           }

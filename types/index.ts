@@ -2,9 +2,12 @@ import { User, Session } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string; // Corresponds to auth.users.id
-  username: string | null;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
   avatar_url: string | null;
-  color: string | null; // User's chosen unique color
+  timezone: string | null;
+  created_at: string | null;
   updated_at: string | null;
 }
 

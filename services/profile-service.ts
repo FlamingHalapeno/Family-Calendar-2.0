@@ -2,32 +2,36 @@ import { supabase } from '../lib/supabase';
 import { UserProfile } from '../types';
 
 /**
- * Fetches the user profile from the 'profiles' table.
- * @param userId The ID of the user whose profile is to be fetched.
- * @returns A promise that resolves to the UserProfile or null if not found or an error occurs.
+ * Fetches the user profile from the 'users' table.
+ * @param userId The ID of the user whose profile to fetch.
+ * @returns A promise that resolves to the UserProfile or null if not found.
  */
-export async function getProfile(userId: string): Promise<UserProfile | null> {
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   try {
-    const { data, error, status } = await supabase
-      .from('profiles')
-      .select('id, username, avatar_url, color, updated_at')
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
       .eq('id', userId)
       .single();
 
-    if (error && status !== 406) { // 406 is when no rows are found, which is not necessarily an error here
-      console.error('Error fetching profile:', error);
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No row found
+        return null;
+      }
+      console.error('Error fetching user profile:', error);
       throw error;
     }
 
-    return data as UserProfile | null;
+    return data as UserProfile;
   } catch (error) {
-    console.error('Error in getProfile:', error);
+    console.error('Error in getUserProfile:', error);
     return null;
   }
 }
 
 /**
- * Updates or inserts a user profile in the 'profiles' table.
+ * Updates or inserts a user profile in the 'users' table.
  * Supabase's upsert functionality is used here.
  * @param profile The profile data to update or insert.
  *                 The 'id' field within the profile object is used to identify the user.
@@ -36,7 +40,7 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 export async function updateProfile(profile: Partial<UserProfile> & { id: string }): Promise<UserProfile | null> {
   try {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('users')
       .upsert(profile)
       .select()
       .single();

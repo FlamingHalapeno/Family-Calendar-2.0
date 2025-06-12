@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 import { useAuth } from '../providers/AuthProvider';
 
 export function LoginScreen() {
@@ -22,6 +23,42 @@ export function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
+
+  // Auto-login for testing
+  useEffect(() => {
+    const autoLogin = async () => {
+      const shouldAutoLogin = Constants.expoConfig?.extra?.autoLogin;
+      const testEmail = Constants.expoConfig?.extra?.testEmail;
+      const testPassword = Constants.expoConfig?.extra?.testPassword;
+
+      if (shouldAutoLogin && testEmail && testPassword && !isLoading) {
+        console.log('Auto-logging in with test credentials...');
+        setEmail(testEmail);
+        setPassword(testPassword);
+        
+        // Small delay to let the UI update
+        setTimeout(async () => {
+          setIsLoading(true);
+          try {
+            const { data, error } = await signIn(testEmail, testPassword);
+            if (error) {
+              console.log('Auto-login failed:', error.message);
+              Alert.alert('Auto-login failed', error.message);
+            } else {
+              console.log('Auto-login successful');
+            }
+          } catch (error) {
+            console.log('Auto-login error:', error);
+            Alert.alert('Auto-login error', 'An unexpected error occurred');
+          } finally {
+            setIsLoading(false);
+          }
+        }, 500);
+      }
+    };
+
+    autoLogin();
+  }, []);
 
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {

@@ -4,6 +4,9 @@ import { createDrawerNavigator, DrawerContentComponentProps } from '@react-navig
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { DisplaySettingsScreen } from '../screens/DisplaySettingsScreen';
+import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
+import { AboutSettingsScreen } from '../screens/AboutSettingsScreen';
 import { TasksScreen } from '../screens/TasksScreen';
 import { NotesScreen } from '../screens/NotesScreen';
 import { ContactsScreen } from '../screens/ContactsScreen';
@@ -68,6 +71,30 @@ function AuthenticatedNavigator() {
         component={SettingsScreen}
         options={{
           title: 'Settings',
+        }}
+      />
+      <Drawer.Screen 
+        name="DisplaySettings" 
+        component={DisplaySettingsScreen}
+        options={{
+          title: 'Display',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen 
+        name="NotificationSettings" 
+        component={NotificationSettingsScreen}
+        options={{
+          title: 'Notifications',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen 
+        name="AboutSettings" 
+        component={AboutSettingsScreen}
+        options={{
+          title: 'About',
+          drawerItemStyle: { display: 'none' },
         }}
       />
     </Drawer.Navigator>

@@ -45,7 +45,8 @@ alwaysApply: true
     - Realtime Capabilities: Implement Realtime subscriptions for features requiring live data updates (e.g., chats, notifications), ensuring proper subscription lifecycle management (subscribe/unsubscribe).
     - Server-Side Logic with Edge Functions: Develop and invoke TypeScript-based Supabase Edge Functions for custom server-side logic, complex operations, or tasks requiring elevated privileges.
     - OAuth and Deep Linking: For social logins, integrate OAuth providers using expo-web-browser or expo-auth-session, ensuring deep linking is correctly configured to return users to the app post-authentication.
-
+    - Any time a supabase sql change needs to happen, update the supabase-complete-setup.sql so that it is up to date and accurate.
+    
 Internationalization (i18n)
     - Core Library Setup & Configuration: Select and initialize an i18n library (e.g., i18next with react-i18next alongside expo-localization) early in the app, configuring translation resources, fallback languages, and initial language detection.
     - Translation Management & Usage: Organize translation strings in language-specific files (e.g., JSON), use consistent and descriptive keys, and access translations in components via hooks like useTranslation.

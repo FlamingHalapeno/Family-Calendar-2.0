@@ -59,6 +59,22 @@ CREATE TABLE IF NOT EXISTS public.family_members (
 ALTER TABLE public.family_members ENABLE ROW LEVEL SECURITY;
 
 -- ===================================
+-- FAMILY_INVITES TABLE
+-- ===================================
+-- Store temporary invitation codes for families
+CREATE TABLE IF NOT EXISTS public.family_invites (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    family_id UUID REFERENCES public.families(id) ON DELETE CASCADE NOT NULL,
+    code TEXT NOT NULL UNIQUE,
+    created_by UUID REFERENCES auth.users(id) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE DEFAULT (timezone('utc'::text, now()) + INTERVAL '24 hours') NOT NULL
+);
+
+-- Enable RLS
+ALTER TABLE public.family_invites ENABLE ROW LEVEL SECURITY;
+
+-- ===================================
 -- EVENTS TABLE
 -- ===================================
 -- Store calendar events
@@ -224,6 +240,19 @@ CREATE POLICY "Users can join families" ON public.family_members
 DROP POLICY IF EXISTS "Users can leave families" ON public.family_members;
 CREATE POLICY "Users can leave families" ON public.family_members
     FOR DELETE USING (user_id = auth.uid());
+    
+-- Family Invites table policies
+DROP POLICY IF EXISTS "Family admins can create invite codes" ON public.family_invites;
+CREATE POLICY "Family admins can create invite codes" ON public.family_invites
+    FOR INSERT WITH CHECK (
+        created_by = auth.uid() AND
+        get_family_role(family_id, auth.uid()) = 'admin'
+    );
+
+DROP POLICY IF EXISTS "Authenticated users can read invite codes" ON public.family_invites;
+CREATE POLICY "Authenticated users can read invite codes" ON public.family_invites
+    FOR SELECT USING (auth.role() = 'authenticated');
+
 
 -- Events table policies
 DROP POLICY IF EXISTS "Family members can view family events" ON public.events;
@@ -341,8 +370,8 @@ CREATE POLICY "Contact creators and family admins can delete contacts" ON public
 -- UTILITY AND BUSINESS LOGIC FUNCTIONS
 -- ===================================
 
--- Function to get all members of the current user's family
-CREATE OR REPLACE FUNCTION get_my_family_members()
+-- Function to get all members of a user's family
+CREATE OR REPLACE FUNCTION public.get_my_family_members(p_user_id UUID)
 RETURNS TABLE (
     id UUID,
     first_name TEXT,
@@ -352,15 +381,16 @@ RETURNS TABLE (
     avatar_url TEXT
 )
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
+STABLE
 AS $$
 DECLARE
     v_family_id UUID;
 BEGIN
-    -- Get the family_id of the current user
+    -- Get the family_id of the specified user
     SELECT family_id INTO v_family_id
     FROM public.family_members
-    WHERE user_id = auth.uid()
+    WHERE user_id = p_user_id
     LIMIT 1;
 
     -- If user is not in any family, return empty result
@@ -459,6 +489,65 @@ BEGIN
 END;
 $$;
 -- =======================================================
+
+-- Function to generate a new invite code for a family
+CREATE OR REPLACE FUNCTION public.generate_family_invite_code(p_family_id UUID)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_code TEXT;
+BEGIN
+    -- Check if the current user is an admin of the family
+    IF get_family_role(p_family_id, auth.uid()) <> 'admin' THEN
+        RAISE EXCEPTION 'Only admins can generate invite codes.';
+    END IF;
+
+    -- Generate a unique 5-digit code
+    LOOP
+        v_code := substr(floor(random() * 90000 + 10000)::text, 1, 5);
+        EXIT WHEN NOT EXISTS (SELECT 1 FROM public.family_invites WHERE code = v_code AND expires_at > now());
+    END LOOP;
+
+    -- Insert the new code into the table
+    INSERT INTO public.family_invites (family_id, code, created_by)
+    VALUES (p_family_id, v_code, auth.uid());
+
+    RETURN v_code;
+END;
+$$;
+
+-- Function for a user to join a family using a code
+CREATE OR REPLACE FUNCTION public.join_family_with_code(p_code TEXT)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_family_id UUID;
+    v_invite_id UUID;
+BEGIN
+    -- Find a valid, unexpired invite
+    SELECT id, family_id INTO v_invite_id, v_family_id
+    FROM public.family_invites
+    WHERE code = p_code AND expires_at > now()
+    LIMIT 1;
+
+    IF v_family_id IS NULL THEN
+        RAISE EXCEPTION 'Invalid or expired invitation code.';
+    END IF;
+
+    -- Add the current user to the family
+    INSERT INTO public.family_members (family_id, user_id, role)
+    VALUES (v_family_id, auth.uid(), 'member');
+
+    -- Delete the used invite code
+    DELETE FROM public.family_invites WHERE id = v_invite_id;
+
+    RETURN v_family_id;
+END;
+$$;
 
 
 -- ===================================

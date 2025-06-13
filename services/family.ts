@@ -7,7 +7,7 @@ export async function createFamily(userId: string, familyName: string, familyDes
   }
 
   const { data, error } = await supabase.rpc('create_new_family', {
-    p_user_id: userId, // Pass the user ID as a parameter
+    p_user_id: userId,
     p_family_name: familyName,
     p_family_description: familyDescription,
   });
@@ -19,19 +19,37 @@ export async function createFamily(userId: string, familyName: string, familyDes
   return data;
 }
 
-export async function getFamilyMembers(): Promise<FamilyMember[]> {
-  const { data, error } = await supabase.rpc('get_my_family_members');
+export async function getFamilyMembers(userId: string): Promise<FamilyMember[]> {
+  if (!userId) {
+    console.log('getFamilyMembers was called without a user ID.');
+    return [];
+  }
 
-  console.log('App RPC call result:', { data, error });
-  console.log('Data length:', data?.length);
+  console.log(`getFamilyMembers: Fetching family for user: ${userId}`);
+
+  const { data, error } = await supabase.rpc('get_my_family_members', {
+    p_user_id: userId,
+  });
+
+  console.log('RPC call result:', { data, error });
 
   if (error) {
     console.error('Error fetching family members:', error);
     throw new Error(error.message);
   }
 
-  // Return empty array if user is not in any family yet
   return data || [];
+}
+
+export async function removeFamilyMember(userIdToRemove: string): Promise<void> {
+  const { error } = await supabase.rpc('remove_family_member', {
+    user_id_to_remove: userIdToRemove,
+  });
+
+  if (error) {
+    console.error('Error removing family member:', error);
+    throw new Error(error.message);
+  }
 }
 
 export async function getFamilyMembersAlternative(): Promise<FamilyMember[]> {
@@ -103,17 +121,6 @@ export async function getFamilyMembersAlternative(): Promise<FamilyMember[]> {
   })) || [];
 }
 
-export async function removeFamilyMember(userIdToRemove: string): Promise<void> {
-  const { error } = await supabase.rpc('remove_family_member', {
-    user_id_to_remove: userIdToRemove,
-  });
-
-  if (error) {
-    console.error('Error removing family member:', error);
-    throw new Error(error.message);
-  }
-}
-
 export async function getFamilyMembersWithUserId(userId: string): Promise<FamilyMember[]> {
   console.log('getFamilyMembersWithUserId called with:', userId);
 
@@ -164,4 +171,45 @@ export async function getFamilyMembersWithUserId(userId: string): Promise<Family
     role: member.role,
     avatar_url: member.users.avatar_url,
   })) || [];
+}
+
+export async function getCurrentUserFamilyId(userId: string): Promise<string | null> {
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('family_members')
+    .select('family_id')
+    .eq('user_id', userId)
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data.family_id;
+}
+
+export async function generateInviteCode(familyId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('generate_family_invite_code', {
+    p_family_id: familyId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+export async function joinFamily(code: string): Promise<string> {
+  const { data, error } = await supabase.rpc('join_family_with_code', {
+    p_code: code,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
 }

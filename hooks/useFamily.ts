@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
-import { getFamilyMembersWithUserId, removeFamilyMember, createFamily } from '../services/family';
+import { getFamilyMembers, removeFamilyMember, createFamily, generateInviteCode, joinFamily, getCurrentUserFamilyId } from '../services/family';
 import { useAuth } from './use-auth';
 import { AppErrorHandler } from '../utils/error-handler';
 
@@ -9,12 +9,30 @@ export function useFamilyMembers() {
 
   return useQuery({
     queryKey: ['family-members', user?.id],
-    queryFn: () => getFamilyMembersWithUserId(user!.id),
+    queryFn: () => {
+      if (!user?.id) {
+        return Promise.resolve([]);
+      }
+      return getFamilyMembers(user.id);
+    },
     enabled: !!user?.id,
   });
 }
 
+export function useCurrentUserFamilyId() {
+  const { user } = useAuth();
 
+  return useQuery({
+    queryKey: ['current-user-family-id', user?.id],
+    queryFn: () => {
+      if (!user?.id) {
+        return Promise.resolve(null);
+      }
+      return getCurrentUserFamilyId(user.id);
+    },
+    enabled: !!user?.id,
+  });
+}
 
 export function useRemoveFamilyMember() {
   const queryClient = useQueryClient();
@@ -51,6 +69,39 @@ export function useCreateFamily() {
     onError: (error: Error) => {
       // The component's onError callback will handle UI alerts
       console.error('useCreateFamily mutation error:', error);
+    },
+  });
+}
+
+export function useGenerateInviteCode() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: (familyId: string) => generateInviteCode(familyId),
+    onSuccess: () => {
+      // You might want to invalidate some queries here if needed
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Generating Code', appError.message);
+    },
+  });
+}
+
+export function useJoinFamily() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: (code: string) => joinFamily(code),
+    onSuccess: () => {
+      // Invalidate queries to refetch family members after joining
+      queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Joining Family', appError.message);
     },
   });
 }

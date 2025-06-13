@@ -8,14 +8,18 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useCreateFamily } from '../hooks/useFamily';
+import { useCreateFamily, useJoinFamily } from '../hooks/useFamily';
 
 export function FamilySettingsScreen() {
   const navigation = useNavigation();
   const [familyName, setFamilyName] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const createFamilyMutation = useCreateFamily();
+  const joinFamilyMutation = useJoinFamily();
 
   const handleCreateFamily = async () => {
     if (!familyName.trim()) {
@@ -34,6 +38,27 @@ export function FamilySettingsScreen() {
         },
       }
     );
+  };
+
+  const handleJoinFamily = () => {
+    if (!joinCode.trim() || joinCode.trim().length !== 5) {
+      Alert.alert('Validation Error', 'Please enter a 5-digit family code.');
+      return;
+    }
+    
+    joinFamilyMutation.mutate(joinCode.trim(), {
+      onSuccess: () => {
+        Alert.alert('Success', 'You have joined the family!');
+        setShowJoinModal(false);
+        setJoinCode('');
+        navigation.navigate('FamilyMembers' as never); // Navigate to see the new family
+      },
+      onError: (error) => {
+        // The hook's onError will already show an alert.
+        // You can add more specific logic here if needed.
+        console.error(error);
+      },
+    });
   };
 
   return (
@@ -69,12 +94,60 @@ export function FamilySettingsScreen() {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Join an Existing Family</Text>
-          <Text style={styles.infoText}>Functionality to join a family with an invite code is coming soon.</Text>
-          <TouchableOpacity style={[styles.button, styles.disabledButton]} disabled>
-            <Text style={styles.buttonText}>Join Family</Text>
+          <Text style={styles.infoText}>Enter a 5-digit family code to join.</Text>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => setShowJoinModal(true)}
+          >
+            <Text style={styles.buttonText}>Join with Code</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        visible={showJoinModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowJoinModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Join Family</Text>
+            <Text style={styles.modalSubtitle}>Enter the 5-digit family code</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="12345"
+              value={joinCode}
+              onChangeText={setJoinCode}
+              keyboardType="numeric"
+              maxLength={5}
+              autoFocus={true}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowJoinModal(false);
+                  setJoinCode('');
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.joinButton, joinFamilyMutation.isPending && styles.disabledButton]}
+                onPress={handleJoinFamily}
+                disabled={joinFamilyMutation.isPending}
+              >
+                {joinFamilyMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.joinButtonText}>Join</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -139,5 +212,67 @@ const styles = StyleSheet.create({
     color: '#6D6D72',
     marginBottom: 15,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6D6D72',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalInput: {
+    backgroundColor: '#F2F2F7',
+    borderRadius: 8,
+    padding: 15,
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    letterSpacing: 2,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F2F2F7',
+    marginRight: 10,
+  },
+  cancelButtonText: {
+    color: '#6D6D72',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  joinButton: {
+    backgroundColor: '#007AFF',
+    marginLeft: 10,
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

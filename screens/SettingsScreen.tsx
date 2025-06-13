@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useFamilyMembers } from '../hooks/useFamily';
 
 interface SettingRowProps {
   title: string;
@@ -43,6 +44,7 @@ function SettingSection({ title, children }: SettingSectionProps) {
 
 export function SettingsScreen() {
   const navigation = useNavigation();
+  const { data: familyMembers } = useFamilyMembers();
 
   const handleDisplayPress = () => {
     navigation.navigate('DisplaySettings' as never);
@@ -53,7 +55,16 @@ export function SettingsScreen() {
   };
 
   const handleFamilyPress = () => {
-    navigation.navigate('FamilySettings' as never);
+    // Check if user is already in a family
+    const isInFamily = familyMembers && familyMembers.length > 0;
+
+    if (isInFamily) {
+      // User is in a family, go to Family Members screen
+      navigation.navigate('FamilyMembers' as never);
+    } else {
+      // User is not in a family, go to Family Settings (create/join)
+      navigation.navigate('FamilySettings' as never);
+    }
   };
 
   const handleAboutPress = () => {

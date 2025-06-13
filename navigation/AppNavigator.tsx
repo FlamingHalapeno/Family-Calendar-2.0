@@ -10,6 +10,7 @@ import { TasksScreen } from '../screens/TasksScreen';
 import { NotesScreen } from '../screens/NotesScreen';
 import { ContactsScreen } from '../screens/ContactsScreen';
 import { LoginScreen } from '../screens/LoginScreen';
+import { FamilySettingsScreen } from '../screens/FamilySettingsScreen';
 import { DrawerContent } from '../components/DrawerContent';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../hooks/use-auth';
@@ -66,15 +67,23 @@ function AuthenticatedNavigator() {
           title: 'Family Contacts',
         }}
       />
-      <Drawer.Screen 
-        name="Settings" 
+      <Drawer.Screen
+        name="Settings"
         component={SettingsScreen}
         options={{
           title: 'Settings',
         }}
       />
-      <Drawer.Screen 
-        name="DisplaySettings" 
+      <Drawer.Screen
+        name="FamilySettings"
+        component={FamilySettingsScreen}
+        options={{
+          title: 'Family',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="DisplaySettings"
         component={DisplaySettingsScreen}
         options={{
           title: 'Display',

@@ -173,6 +173,7 @@ $$;
 -- ===================================
 
 -- Users table policies
+DROP POLICY IF EXISTS "Users can view profiles of self and family members" ON public.users;
 CREATE POLICY "Users can view profiles of self and family members" ON public.users
     FOR SELECT USING (
         auth.uid() = users.id
@@ -183,59 +184,60 @@ CREATE POLICY "Users can view profiles of self and family members" ON public.use
         )
     );
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.users;
 CREATE POLICY "Users can update their own profile" ON public.users
     FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.users;
 CREATE POLICY "Users can insert their own profile" ON public.users
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Families table policies
+DROP POLICY IF EXISTS "Family members can view their families" ON public.families;
 CREATE POLICY "Family members can view their families" ON public.families
     FOR SELECT USING (families.id = get_user_family_id(auth.uid()));
 
+DROP POLICY IF EXISTS "Family admins can update families" ON public.families;
 CREATE POLICY "Family admins can update families" ON public.families
     FOR UPDATE USING (
         families.id = get_user_family_id(auth.uid()) AND
         get_family_role(families.id, auth.uid()) = 'admin'
     );
 
+DROP POLICY IF EXISTS "Users can create families" ON public.families;
+DROP POLICY IF EXISTS "Authenticated users can create families" ON public.families;
 CREATE POLICY "Users can create families" ON public.families
     FOR INSERT WITH CHECK (auth.uid() = created_by);
 
 -- Family members table policies
--- Dropping old policies to be replaced
-DROP POLICY IF EXISTS "Family members can view memberships in families they belong to" ON public.family_members;
-DROP POLICY IF EXISTS "Users can insert themselves into families" ON public.family_members;
-DROP POLICY IF EXISTS "Family creators and admins can manage membership" ON public.family_members;
-DROP POLICY IF EXISTS "Family members can view memberships" ON public.family_members;
-DROP POLICY IF EXISTS "Users can join families" ON public.family_members;
-DROP POLICY IF EXISTS "Admins can add members" ON public.family_members;
-DROP POLICY IF EXISTS "Members can leave and admins can remove members" ON public.family_members;
-DROP POLICY IF EXISTS "Admins can update memberships" ON public.family_members;
-
--- Simple, non-recursive policies
--- Allow users to view their own memberships and other members in their families
+DROP POLICY IF EXISTS "Users can view family memberships" ON public.family_members;
 CREATE POLICY "Users can view family memberships" ON public.family_members
     FOR SELECT USING (
         user_id = auth.uid() OR
         family_id = get_user_family_id(auth.uid())
     );
 
+DROP POLICY IF EXISTS "Users can join families" ON public.family_members;
 CREATE POLICY "Users can join families" ON public.family_members
     FOR INSERT WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can leave families" ON public.family_members;
 CREATE POLICY "Users can leave families" ON public.family_members
     FOR DELETE USING (user_id = auth.uid());
+
 -- Events table policies
+DROP POLICY IF EXISTS "Family members can view family events" ON public.events;
 CREATE POLICY "Family members can view family events" ON public.events
     FOR SELECT USING (events.family_id = get_user_family_id(auth.uid()));
 
+DROP POLICY IF EXISTS "Family members can create events" ON public.events;
 CREATE POLICY "Family members can create events" ON public.events
     FOR INSERT WITH CHECK (
         events.family_id = get_user_family_id(auth.uid()) AND
         auth.uid() = created_by
     );
 
+DROP POLICY IF EXISTS "Event creators and family admins can update events" ON public.events;
 CREATE POLICY "Event creators and family admins can update events" ON public.events
     FOR UPDATE USING (
         auth.uid() = created_by OR
@@ -243,6 +245,7 @@ CREATE POLICY "Event creators and family admins can update events" ON public.eve
          get_family_role(events.family_id, auth.uid()) = 'admin')
     );
 
+DROP POLICY IF EXISTS "Event creators and family admins can delete events" ON public.events;
 CREATE POLICY "Event creators and family admins can delete events" ON public.events
     FOR DELETE USING (
         auth.uid() = created_by OR
@@ -251,15 +254,18 @@ CREATE POLICY "Event creators and family admins can delete events" ON public.eve
     );
 
 -- Tasks table policies
+DROP POLICY IF EXISTS "Family members can view family tasks" ON public.tasks;
 CREATE POLICY "Family members can view family tasks" ON public.tasks
     FOR SELECT USING (tasks.family_id = get_user_family_id(auth.uid()));
 
+DROP POLICY IF EXISTS "Family members can create tasks" ON public.tasks;
 CREATE POLICY "Family members can create tasks" ON public.tasks
     FOR INSERT WITH CHECK (
         tasks.family_id = get_user_family_id(auth.uid()) AND
         auth.uid() = created_by
     );
 
+DROP POLICY IF EXISTS "Task assignees and creators can update tasks" ON public.tasks;
 CREATE POLICY "Task assignees and creators can update tasks" ON public.tasks
     FOR UPDATE USING (
         auth.uid() = assigned_to OR auth.uid() = created_by OR
@@ -267,6 +273,7 @@ CREATE POLICY "Task assignees and creators can update tasks" ON public.tasks
          get_family_role(tasks.family_id, auth.uid()) = 'admin')
     );
 
+DROP POLICY IF EXISTS "Task creators and family admins can delete tasks" ON public.tasks;
 CREATE POLICY "Task creators and family admins can delete tasks" ON public.tasks
     FOR DELETE USING (
         auth.uid() = created_by OR
@@ -275,15 +282,18 @@ CREATE POLICY "Task creators and family admins can delete tasks" ON public.tasks
     );
 
 -- Notes table policies
+DROP POLICY IF EXISTS "Family members can view family notes" ON public.notes;
 CREATE POLICY "Family members can view family notes" ON public.notes
     FOR SELECT USING (notes.family_id = get_user_family_id(auth.uid()));
 
+DROP POLICY IF EXISTS "Family members can create notes" ON public.notes;
 CREATE POLICY "Family members can create notes" ON public.notes
     FOR INSERT WITH CHECK (
         notes.family_id = get_user_family_id(auth.uid()) AND
         auth.uid() = created_by
     );
 
+DROP POLICY IF EXISTS "Note creators and family admins can update notes" ON public.notes;
 CREATE POLICY "Note creators and family admins can update notes" ON public.notes
     FOR UPDATE USING (
         auth.uid() = created_by OR
@@ -291,6 +301,7 @@ CREATE POLICY "Note creators and family admins can update notes" ON public.notes
          get_family_role(notes.family_id, auth.uid()) = 'admin')
     );
 
+DROP POLICY IF EXISTS "Note creators and family admins can delete notes" ON public.notes;
 CREATE POLICY "Note creators and family admins can delete notes" ON public.notes
     FOR DELETE USING (
         auth.uid() = created_by OR
@@ -299,15 +310,18 @@ CREATE POLICY "Note creators and family admins can delete notes" ON public.notes
     );
 
 -- Contacts table policies
+DROP POLICY IF EXISTS "Family members can view family contacts" ON public.contacts;
 CREATE POLICY "Family members can view family contacts" ON public.contacts
     FOR SELECT USING (contacts.family_id = get_user_family_id(auth.uid()));
 
+DROP POLICY IF EXISTS "Family members can create contacts" ON public.contacts;
 CREATE POLICY "Family members can create contacts" ON public.contacts
     FOR INSERT WITH CHECK (
         contacts.family_id = get_user_family_id(auth.uid()) AND
         auth.uid() = created_by
     );
 
+DROP POLICY IF EXISTS "Contact creators and family admins can update contacts" ON public.contacts;
 CREATE POLICY "Contact creators and family admins can update contacts" ON public.contacts
     FOR UPDATE USING (
         auth.uid() = created_by OR
@@ -315,6 +329,7 @@ CREATE POLICY "Contact creators and family admins can update contacts" ON public
          get_family_role(contacts.family_id, auth.uid()) = 'admin')
     );
 
+DROP POLICY IF EXISTS "Contact creators and family admins can delete contacts" ON public.contacts;
 CREATE POLICY "Contact creators and family admins can delete contacts" ON public.contacts
     FOR DELETE USING (
         auth.uid() = created_by OR
@@ -412,6 +427,40 @@ BEGIN
 END;
 $$;
 
+-- ========== NEW FUNCTION FOR CREATING FAMILIES ==========
+-- This is the final, corrected version of the function.
+-- It uses SECURITY DEFINER and accepts a user_id to avoid role/context issues.
+DROP FUNCTION IF EXISTS public.create_new_family(text, text);
+DROP FUNCTION IF EXISTS public.create_new_family(uuid, text, text);
+
+CREATE OR REPLACE FUNCTION public.create_new_family(p_user_id UUID, p_family_name TEXT, p_family_description TEXT)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_new_family_id UUID;
+BEGIN
+    -- Check if the provided user is already in a family
+    IF EXISTS (SELECT 1 FROM public.family_members WHERE user_id = p_user_id) THEN
+        RAISE EXCEPTION 'User is already in a family.';
+    END IF;
+
+    -- Create the new family using the passed-in user ID
+    INSERT INTO public.families (name, description, created_by)
+    VALUES (p_family_name, p_family_description, p_user_id)
+    RETURNING id INTO v_new_family_id;
+
+    -- Add the creator as an admin member of the new family
+    INSERT INTO public.family_members (family_id, user_id, role)
+    VALUES (v_new_family_id, p_user_id, 'admin');
+
+    RETURN v_new_family_id;
+END;
+$$;
+-- =======================================================
+
+
 -- ===================================
 -- TRIGGER FUNCTIONS
 -- ===================================
@@ -431,9 +480,6 @@ BEGIN
     INSERT INTO public.users (id, email, first_name, last_name)
     VALUES (NEW.id, NEW.email, v_first_name, v_last_name);
 
-    -- Note: Family creation and membership will be handled separately
-    -- in a later step of the user onboarding process
-
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -452,26 +498,34 @@ $$ LANGUAGE plpgsql;
 -- ===================================
 
 -- Trigger to create profile on user signup
+-- Drop trigger if it exists to avoid errors on re-run
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Add updated_at triggers to all tables
+DROP TRIGGER IF EXISTS handle_updated_at ON public.users;
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS handle_updated_at ON public.families;
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.families
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS handle_updated_at ON public.events;
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.events
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS handle_updated_at ON public.tasks;
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.tasks
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS handle_updated_at ON public.notes;
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.notes
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS handle_updated_at ON public.contacts;
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.contacts
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
@@ -493,10 +547,3 @@ CREATE INDEX IF NOT EXISTS idx_contacts_family_id ON public.contacts(family_id);
 -- ===================================
 -- SETUP COMPLETE
 -- ===================================
--- Your Family Calendar 2.0 database is now ready!
--- 
--- Next steps:
--- 1. Set up your environment variables in your app
--- 2. Configure email templates in Supabase Auth settings
--- 3. Set up any storage buckets if you plan to store files
--- 4. Configure your app's domain in Supabase Auth settings 

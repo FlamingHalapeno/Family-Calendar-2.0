@@ -31,7 +31,7 @@
       },
       "supabaseUrl": "https://isyihkdpnlrpzqojvtyl.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeWloa2RwbmxycHpxb2p2dHlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NDg1NzAsImV4cCI6MjA2NTIyNDU3MH0.uuc6evidDzuZH_w8stwtoJzBQNpKRGPQgmMkf9UYvTM",
-      "autoLogin": false,
+      "autoLogin": true,
       "testEmail": "JohnDoe@gmail.com",
       "testPassword": "JohnDoe"
     }

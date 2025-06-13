@@ -52,6 +52,10 @@ export function SettingsScreen() {
     navigation.navigate('NotificationSettings' as never);
   };
 
+  const handleFamilyPress = () => {
+    navigation.navigate('FamilySettings' as never);
+  };
+
   const handleAboutPress = () => {
     navigation.navigate('AboutSettings' as never);
   };
@@ -61,11 +65,17 @@ export function SettingsScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Settings</Text>
 
-        <SettingSection title="">
+        <SettingSection title="General">
           <SettingRow title="Display" onPress={handleDisplayPress} />
           <View style={styles.separator} />
           <SettingRow title="Notifications" onPress={handleNotificationsPress} />
-          <View style={styles.separator} />
+        </SettingSection>
+
+        <SettingSection title="Family">
+          <SettingRow title="Family Members" onPress={handleFamilyPress} />
+        </SettingSection>
+
+        <SettingSection title="About">
           <SettingRow title="About" onPress={handleAboutPress} />
         </SettingSection>
       </ScrollView>

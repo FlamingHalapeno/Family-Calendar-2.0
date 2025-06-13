@@ -1,6 +1,24 @@
 import { supabase } from '../lib/supabase';
 import { FamilyMember } from '../types/family';
 
+export async function createFamily(userId: string, familyName: string, familyDescription: string): Promise<string> {
+  if (!userId) {
+    throw new Error('User is not authenticated and cannot create a family.');
+  }
+
+  const { data, error } = await supabase.rpc('create_new_family', {
+    p_user_id: userId, // Pass the user ID as a parameter
+    p_family_name: familyName,
+    p_family_description: familyDescription,
+  });
+
+  if (error) {
+    console.error('Error creating new family:', error);
+    throw new Error(error.message);
+  }
+  return data;
+}
+
 export async function getFamilyMembers(): Promise<FamilyMember[]> {
   const { data, error } = await supabase.rpc('get_my_family_members');
 

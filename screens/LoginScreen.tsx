@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
-import { useAuth } from '../providers/AuthProvider';
+import { useAuth } from '../hooks/use-auth';
 
 export function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -32,15 +32,15 @@ export function LoginScreen() {
       const testPassword = Constants.expoConfig?.extra?.testPassword;
 
       if (shouldAutoLogin && testEmail && testPassword && !isLoading) {
-        console.log('Auto-logging in with test credentials...');
+        console.log('Auto-logging in with test credentials...', { testEmail });
         setEmail(testEmail);
         setPassword(testPassword);
-        
+
         // Small delay to let the UI update
         setTimeout(async () => {
           setIsLoading(true);
           try {
-            const { data, error } = await signIn(testEmail, testPassword);
+            const { error } = await signIn(testEmail, testPassword);
             if (error) {
               console.log('Auto-login failed:', error.message);
               Alert.alert('Auto-login failed', error.message);
@@ -54,6 +54,13 @@ export function LoginScreen() {
             setIsLoading(false);
           }
         }, 500);
+      } else {
+        console.log('Auto-login conditions not met:', {
+          shouldAutoLogin,
+          hasTestEmail: !!testEmail,
+          hasTestPassword: !!testPassword,
+          isLoading
+        });
       }
     };
 

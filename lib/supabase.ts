@@ -1,18 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 import 'react-native-url-polyfill/auto'; // Required for Supabase to work in React Native
-
-// Get environment variables from Expo constants or process.env for wider compatibility
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  const message = 'Supabase URL or Anon Key is missing. Ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in your app config (app.json or app.config.js under "extra") or .env file.';
-  console.error(message);
-  throw new Error(message); // Throw an error to halt execution if keys are missing
-}
+import { appConfig } from '../config/app-config';
 
 // Hybrid storage adapter that handles large values gracefully
 const HybridStorageAdapter = {
@@ -90,7 +80,7 @@ const HybridStorageAdapter = {
 };
 
 // Create Supabase client with hybrid storage
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(appConfig.supabase.url, appConfig.supabase.anonKey, {
   auth: {
     storage: HybridStorageAdapter,
     autoRefreshToken: true,

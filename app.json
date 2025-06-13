@@ -22,15 +22,18 @@
       "package": "com.familycalendar.app"
     },
     "platforms": ["ios", "android", "web"],
+    "plugins": [
+      "expo-secure-store"
+    ],
     "extra": {
-      "supabaseUrl": "https://isyihkdpnlrpzqojvtyl.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeWloa2RwbmxycHpxb2p2dHlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NDg1NzAsImV4cCI6MjA2NTIyNDU3MH0.uuc6evidDzuZH_w8stwtoJzBQNpKRGPQgmMkf9UYvTM",
-      "testEmail": "JohnWick@gmail.com",
-      "testPassword": "Admin1234",
-      "autoLogin": true,
       "eas": {
         "projectId": "isyihkdpnlrpzqojvtyl"
-      }
+      },
+      "supabaseUrl": "https://isyihkdpnlrpzqojvtyl.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeWloa2RwbmxycHpxb2p2dHlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NDg1NzAsImV4cCI6MjA2NTIyNDU3MH0.uuc6evidDzuZH_w8stwtoJzBQNpKRGPQgmMkf9UYvTM",
+      "autoLogin": false,
+      "testEmail": "JohnDoe@gmail.com",
+      "testPassword": "JohnDoe"
     }
   }
 }

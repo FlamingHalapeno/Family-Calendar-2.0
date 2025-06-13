@@ -12,7 +12,8 @@ export async function getFamilyMembers(): Promise<FamilyMember[]> {
     throw new Error(error.message);
   }
 
-  return data;
+  // Return empty array if user is not in any family yet
+  return data || [];
 }
 
 export async function getFamilyMembersAlternative(): Promise<FamilyMember[]> {
@@ -45,8 +46,10 @@ export async function getFamilyMembersAlternative(): Promise<FamilyMember[]> {
 
   console.log('User family lookup:', { userFamilyData, familyError });
 
+  // If user is not in any family yet, return empty array instead of throwing error
   if (familyError || !userFamilyData) {
-    throw new Error('Could not find user family');
+    console.log('User is not in any family yet');
+    return [];
   }
 
   // Now get all members of that family
@@ -95,7 +98,7 @@ export async function removeFamilyMember(userIdToRemove: string): Promise<void> 
 
 export async function getFamilyMembersWithUserId(userId: string): Promise<FamilyMember[]> {
   console.log('getFamilyMembersWithUserId called with:', userId);
-  
+
   // Get current user's family_id first
   const { data: userFamilyData, error: familyError } = await supabase
     .from('family_members')
@@ -106,8 +109,10 @@ export async function getFamilyMembersWithUserId(userId: string): Promise<Family
 
   console.log('User family lookup:', { userFamilyData, familyError });
 
+  // If user is not in any family yet, return empty array instead of throwing error
   if (familyError || !userFamilyData) {
-    throw new Error('Could not find user family');
+    console.log('User is not in any family yet');
+    return [];
   }
 
   // Get all members of that family
@@ -141,4 +146,4 @@ export async function getFamilyMembersWithUserId(userId: string): Promise<Family
     role: member.role,
     avatar_url: member.users.avatar_url,
   })) || [];
-} 
+}

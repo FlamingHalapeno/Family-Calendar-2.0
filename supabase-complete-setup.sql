@@ -158,6 +158,16 @@ AS $$
   SELECT role FROM public.family_members WHERE family_id = p_family_id AND user_id = p_user_id;
 $$;
 
+-- Function to get a user's family ID (used in RLS policies to avoid recursion)
+CREATE OR REPLACE FUNCTION get_user_family_id(p_user_id UUID)
+RETURNS UUID
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT family_id FROM public.family_members WHERE user_id = p_user_id LIMIT 1;
+$$;
+
 -- ===================================
 -- ROW LEVEL SECURITY POLICIES
 -- ===================================
@@ -166,11 +176,10 @@ $$;
 CREATE POLICY "Users can view profiles of self and family members" ON public.users
     FOR SELECT USING (
         auth.uid() = users.id
-        OR EXISTS (
-            SELECT 1
-            FROM public.family_members fm1
-            JOIN public.family_members fm2 ON fm1.family_id = fm2.family_id
-            WHERE fm1.user_id = users.id AND fm2.user_id = auth.uid()
+        OR users.id IN (
+            SELECT fm.user_id
+            FROM public.family_members fm
+            WHERE fm.family_id = get_user_family_id(auth.uid())
         )
     );
 
@@ -182,19 +191,12 @@ CREATE POLICY "Users can insert their own profile" ON public.users
 
 -- Families table policies
 CREATE POLICY "Family members can view their families" ON public.families
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = families.id AND user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (families.id = get_user_family_id(auth.uid()));
 
 CREATE POLICY "Family admins can update families" ON public.families
     FOR UPDATE USING (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = families.id AND user_id = auth.uid() AND role = 'admin'
-        )
+        families.id = get_user_family_id(auth.uid()) AND
+        get_family_role(families.id, auth.uid()) = 'admin'
     );
 
 CREATE POLICY "Users can create families" ON public.families
@@ -212,12 +214,11 @@ DROP POLICY IF EXISTS "Members can leave and admins can remove members" ON publi
 DROP POLICY IF EXISTS "Admins can update memberships" ON public.family_members;
 
 -- Simple, non-recursive policies
-CREATE POLICY "Family members can view their own family memberships" ON public.family_members
+-- Allow users to view their own memberships and other members in their families
+CREATE POLICY "Users can view family memberships" ON public.family_members
     FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.family_members fm 
-            WHERE fm.family_id = family_members.family_id AND fm.user_id = auth.uid()
-        )
+        user_id = auth.uid() OR
+        family_id = get_user_family_id(auth.uid())
     );
 
 CREATE POLICY "Users can join families" ON public.family_members
@@ -227,142 +228,98 @@ CREATE POLICY "Users can leave families" ON public.family_members
     FOR DELETE USING (user_id = auth.uid());
 -- Events table policies
 CREATE POLICY "Family members can view family events" ON public.events
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = events.family_id AND user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (events.family_id = get_user_family_id(auth.uid()));
 
 CREATE POLICY "Family members can create events" ON public.events
     FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = events.family_id AND user_id = auth.uid()
-        ) AND auth.uid() = created_by
+        events.family_id = get_user_family_id(auth.uid()) AND
+        auth.uid() = created_by
     );
 
 CREATE POLICY "Event creators and family admins can update events" ON public.events
     FOR UPDATE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = events.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (events.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(events.family_id, auth.uid()) = 'admin')
     );
 
 CREATE POLICY "Event creators and family admins can delete events" ON public.events
     FOR DELETE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = events.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (events.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(events.family_id, auth.uid()) = 'admin')
     );
 
 -- Tasks table policies
 CREATE POLICY "Family members can view family tasks" ON public.tasks
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = tasks.family_id AND user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (tasks.family_id = get_user_family_id(auth.uid()));
 
 CREATE POLICY "Family members can create tasks" ON public.tasks
     FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = tasks.family_id AND user_id = auth.uid()
-        ) AND auth.uid() = created_by
+        tasks.family_id = get_user_family_id(auth.uid()) AND
+        auth.uid() = created_by
     );
 
 CREATE POLICY "Task assignees and creators can update tasks" ON public.tasks
     FOR UPDATE USING (
         auth.uid() = assigned_to OR auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = tasks.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (tasks.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(tasks.family_id, auth.uid()) = 'admin')
     );
 
 CREATE POLICY "Task creators and family admins can delete tasks" ON public.tasks
     FOR DELETE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = tasks.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (tasks.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(tasks.family_id, auth.uid()) = 'admin')
     );
 
 -- Notes table policies
 CREATE POLICY "Family members can view family notes" ON public.notes
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = notes.family_id AND user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (notes.family_id = get_user_family_id(auth.uid()));
 
 CREATE POLICY "Family members can create notes" ON public.notes
     FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = notes.family_id AND user_id = auth.uid()
-        ) AND auth.uid() = created_by
+        notes.family_id = get_user_family_id(auth.uid()) AND
+        auth.uid() = created_by
     );
 
 CREATE POLICY "Note creators and family admins can update notes" ON public.notes
     FOR UPDATE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = notes.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (notes.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(notes.family_id, auth.uid()) = 'admin')
     );
 
 CREATE POLICY "Note creators and family admins can delete notes" ON public.notes
     FOR DELETE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = notes.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (notes.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(notes.family_id, auth.uid()) = 'admin')
     );
 
 -- Contacts table policies
 CREATE POLICY "Family members can view family contacts" ON public.contacts
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = contacts.family_id AND user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (contacts.family_id = get_user_family_id(auth.uid()));
 
 CREATE POLICY "Family members can create contacts" ON public.contacts
     FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = contacts.family_id AND user_id = auth.uid()
-        ) AND auth.uid() = created_by
+        contacts.family_id = get_user_family_id(auth.uid()) AND
+        auth.uid() = created_by
     );
 
 CREATE POLICY "Contact creators and family admins can update contacts" ON public.contacts
     FOR UPDATE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = contacts.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (contacts.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(contacts.family_id, auth.uid()) = 'admin')
     );
 
 CREATE POLICY "Contact creators and family admins can delete contacts" ON public.contacts
     FOR DELETE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM public.family_members 
-            WHERE family_id = contacts.family_id AND user_id = auth.uid() AND role = 'admin'
-        )
+        (contacts.family_id = get_user_family_id(auth.uid()) AND
+         get_family_role(contacts.family_id, auth.uid()) = 'admin')
     );
 
 -- ===================================
@@ -390,6 +347,11 @@ BEGIN
     FROM public.family_members
     WHERE user_id = auth.uid()
     LIMIT 1;
+
+    -- If user is not in any family, return empty result
+    IF v_family_id IS NULL THEN
+        RETURN;
+    END IF;
 
     -- Return all members of that family
     RETURN QUERY
@@ -460,29 +422,18 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_first_name TEXT;
     v_last_name TEXT;
-    v_family_id UUID;
-    v_family_name TEXT;
 BEGIN
     -- Extract names from metadata
     v_first_name := NEW.raw_user_meta_data ->> 'first_name';
     v_last_name := NEW.raw_user_meta_data ->> 'last_name';
-    
-    -- Create user profile
+
+    -- Create user profile only
     INSERT INTO public.users (id, email, first_name, last_name)
     VALUES (NEW.id, NEW.email, v_first_name, v_last_name);
-    
-    -- Create default family name
-    v_family_name := COALESCE(v_first_name || ' Family', 'My Family');
-    
-    -- Create a default family for the new user
-    INSERT INTO public.families (name, description, created_by)
-    VALUES (v_family_name, 'Family calendar for ' || v_family_name, NEW.id)
-    RETURNING id INTO v_family_id;
-    
-    -- Add the user as an admin to their new family
-    INSERT INTO public.family_members (family_id, user_id, role)
-    VALUES (v_family_id, NEW.id, 'admin');
-    
+
+    -- Note: Family creation and membership will be handled separately
+    -- in a later step of the user onboarding process
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

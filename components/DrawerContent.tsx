@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { DrawerContentScrollView, DrawerContentComponentProps } from '@react-navigation/drawer';
-import { useAuth } from '../providers/AuthProvider';
+import { useAuth } from '../hooks/use-auth';
 
 interface DrawerItemProps {
   label: string;

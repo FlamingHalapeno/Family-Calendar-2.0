@@ -11,7 +11,7 @@ import {
   Switch,
 } from 'react-native';
 import { EventFormData, EventModalProps } from '../../types';
-import { useAuth } from '../../providers/AuthProvider';
+import { useAuth } from '../../hooks/use-auth';
 
 const EVENT_COLORS = [
   '#007AFF', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 

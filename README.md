@@ -113,16 +113,47 @@ npm start
 ## Project Structure
 
 ```
-├── App.tsx                 # Main app component
+├── App.tsx                    # Main app component with error boundary
+├── config/
+│   └── app-config.ts         # App configuration and environment variables
 ├── lib/
-│   ├── supabase.ts        # Supabase client configuration
-│   └── database.types.ts  # TypeScript database types
+│   ├── supabase.ts          # Supabase client configuration
+│   └── database.types.ts    # TypeScript database types
 ├── providers/
-│   ├── AuthProvider.tsx   # Authentication context
-│   └── QueryProvider.tsx  # React Query provider
+│   └── QueryProvider.tsx    # React Query provider
 ├── hooks/
-│   └── useDatabase.ts     # Database operation hooks
-└── components/            # Reusable UI components
+│   ├── use-auth.ts          # Authentication hook and provider
+│   ├── useCalendar.ts       # Calendar operations
+│   ├── useDatabase.ts       # Database operation hooks
+│   └── useFamily.ts         # Family management hooks
+├── components/
+│   ├── Calendar/            # Calendar-specific components
+│   ├── ErrorBoundary.tsx    # Error boundary component
+│   ├── LoadingSpinner.tsx   # Loading component
+│   ├── DrawerContent.tsx    # Navigation drawer content
+│   └── index.ts             # Component exports
+├── screens/                 # Screen components
+│   ├── CalendarScreen.tsx
+│   ├── LoginScreen.tsx
+│   ├── SettingsScreen.tsx
+│   └── index.ts
+├── navigation/
+│   └── AppNavigator.tsx     # Navigation configuration
+├── services/                # API service functions
+│   ├── event-service.ts
+│   ├── family.ts
+│   └── profile-service.ts
+├── types/                   # TypeScript type definitions
+│   ├── index.ts
+│   └── family.ts
+├── utils/                   # Utility functions
+│   ├── validation.ts        # Input validation utilities
+│   ├── error-handler.ts     # Error handling utilities
+│   ├── date-utils.ts        # Date manipulation utilities
+│   └── index.ts
+├── constants/
+│   └── app-constants.ts     # App-wide constants
+└── notes/                   # Project documentation
 ```
 
 ## Environment Variables
@@ -165,10 +196,29 @@ EXPO_PUBLIC_APP_VERSION=1.0.0
 ## Development Commands
 
 ```bash
-npm start          # Start Expo development server
-npm run android    # Run on Android device/emulator
-npm run ios        # Run on iOS device/simulator
-npm run web        # Run in web browser
+# Development
+npm start              # Start Expo development server
+npm run android        # Run on Android device/emulator
+npm run ios           # Run on iOS device/simulator
+npm run web           # Run in web browser
+
+# Code Quality
+npm run lint          # Run ESLint
+npm run lint:fix      # Fix ESLint issues automatically
+npm run format        # Format code with Prettier
+npm run format:check  # Check code formatting
+npm run type-check    # Run TypeScript type checking
+
+# Testing
+npm test              # Run tests
+npm run test:watch    # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+
+# Building
+npm run build         # Build with EAS
+npm run build:android # Build for Android
+npm run build:ios     # Build for iOS
+npm run submit        # Submit to app stores
 ```
 
 ## Contributing

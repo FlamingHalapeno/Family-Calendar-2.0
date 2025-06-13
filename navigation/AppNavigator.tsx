@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentComponentProps } from '@react-navigation/drawer';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { DisplaySettingsScreen } from '../screens/DisplaySettingsScreen';
@@ -12,7 +11,8 @@ import { NotesScreen } from '../screens/NotesScreen';
 import { ContactsScreen } from '../screens/ContactsScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { DrawerContent } from '../components/DrawerContent';
-import { useAuth } from '../providers/AuthProvider';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../hooks/use-auth';
 
 const Drawer = createDrawerNavigator();
 
@@ -105,11 +105,7 @@ export function AppNavigator() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <LoadingSpinner fullScreen message="Loading..." />;
   }
 
   return (
@@ -119,11 +115,3 @@ export function AppNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-}); 

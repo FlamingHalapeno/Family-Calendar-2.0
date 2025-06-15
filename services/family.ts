@@ -177,24 +177,20 @@ export async function getCurrentUserFamilyId(userId: string): Promise<string | n
   if (!userId) {
     return null;
   }
-
-  const { data, error } = await supabase
-    .from('family_members')
-    .select('family_id')
-    .eq('user_id', userId)
-    .limit(1)
-    .single();
-
-  if (error || !data) {
+  const { data, error } = await supabase.rpc('get_my_family_id', {
+    p_user_id: userId
+  });
+  if (error) {
+    console.error('Error fetching current user family ID:', error);
     return null;
   }
-
-  return data.family_id;
+  return data;
 }
 
-export async function generateInviteCode(familyId: string): Promise<string> {
+export async function generateInviteCode(familyId: string, creatorId: string): Promise<string> {
   const { data, error } = await supabase.rpc('generate_family_invite_code', {
     p_family_id: familyId,
+    p_creator_id: creatorId,
   });
 
   if (error) {

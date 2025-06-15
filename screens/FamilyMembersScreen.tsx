@@ -14,9 +14,11 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useFamilyMembers, useGenerateInviteCode, useCurrentUserFamilyId } from '../hooks/useFamily';
 import { FamilyMember } from '../types/family';
+import { useAuth } from '../hooks/use-auth';
 
 export function FamilyMembersScreen() {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const { data: familyMembers, isLoading, error } = useFamilyMembers();
   const { data: familyId } = useCurrentUserFamilyId();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -25,12 +27,12 @@ export function FamilyMembersScreen() {
   const generateInviteCodeMutation = useGenerateInviteCode();
 
   const handleGenerateCode = async () => {
-    if (!familyId) {
-      Alert.alert('Error', 'Could not determine the family to invite to.');
+    if (!familyId || !user?.id) {
+      Alert.alert('Error', 'Could not determine the family or user to create an invite.');
       return;
     }
 
-    generateInviteCodeMutation.mutate(familyId, {
+    generateInviteCodeMutation.mutate({ familyId, creatorId: user.id }, {
       onSuccess: (code) => {
         setInviteCode(code);
       },

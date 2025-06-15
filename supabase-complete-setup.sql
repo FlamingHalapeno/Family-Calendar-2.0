@@ -1,5 +1,5 @@
 -- ===================================
--- Family Calendar 2.0 - Complete Supabase Setup
+-- Family Calendar 2.0 - Complete Supabase Setup (All Fixes Included)
 -- ===================================
 -- Run this script in your Supabase SQL editor to set up the complete database schema
 -- Make sure to run the cleanup script first if your project is not empty
@@ -416,6 +416,17 @@ BEGIN
 END;
 $$;
 
+-- Function to get the current user's family ID directly (for client-side use)
+CREATE OR REPLACE FUNCTION get_my_family_id(p_user_id UUID)
+RETURNS UUID
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT family_id FROM public.family_members WHERE user_id = p_user_id LIMIT 1;
+$$;
+
+
 -- Function to remove a member from the current user's family
 CREATE OR REPLACE FUNCTION remove_family_member(user_id_to_remove UUID)
 RETURNS VOID
@@ -490,8 +501,9 @@ END;
 $$;
 -- =======================================================
 
--- Function to generate a new invite code for a family
-CREATE OR REPLACE FUNCTION public.generate_family_invite_code(p_family_id UUID)
+-- Function to generate a new invite code for a family (final corrected version)
+DROP FUNCTION IF EXISTS public.generate_family_invite_code(UUID);
+CREATE OR REPLACE FUNCTION public.generate_family_invite_code(p_family_id UUID, p_creator_id UUID)
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -499,8 +511,8 @@ AS $$
 DECLARE
     v_code TEXT;
 BEGIN
-    -- Check if the current user is an admin of the family
-    IF get_family_role(p_family_id, auth.uid()) <> 'admin' THEN
+    -- Use the passed-in creator ID for the role check
+    IF get_family_role(p_family_id, p_creator_id) <> 'admin' THEN
         RAISE EXCEPTION 'Only admins can generate invite codes.';
     END IF;
 
@@ -510,9 +522,9 @@ BEGIN
         EXIT WHEN NOT EXISTS (SELECT 1 FROM public.family_invites WHERE code = v_code AND expires_at > now());
     END LOOP;
 
-    -- Insert the new code into the table
+    -- Insert the new code into the table, using the passed-in creator ID
     INSERT INTO public.family_invites (family_id, code, created_by)
-    VALUES (p_family_id, v_code, auth.uid());
+    VALUES (p_family_id, v_code, p_creator_id);
 
     RETURN v_code;
 END;

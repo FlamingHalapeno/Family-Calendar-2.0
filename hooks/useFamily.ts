@@ -65,6 +65,7 @@ export function useCreateFamily() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['current-user-family-id', user?.id] });
     },
     onError: (error: Error) => {
       // The component's onError callback will handle UI alerts
@@ -75,10 +76,10 @@ export function useCreateFamily() {
 
 export function useGenerateInviteCode() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   return useMutation({
-    mutationFn: (familyId: string) => generateInviteCode(familyId),
+    mutationFn: ({ familyId, creatorId }: { familyId: string, creatorId: string }) => 
+      generateInviteCode(familyId, creatorId),
     onSuccess: () => {
       // You might want to invalidate some queries here if needed
     },
@@ -98,6 +99,7 @@ export function useJoinFamily() {
     onSuccess: () => {
       // Invalidate queries to refetch family members after joining
       queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['current-user-family-id', user?.id] });
     },
     onError: (error: Error) => {
       const appError = AppErrorHandler.handleError(error);

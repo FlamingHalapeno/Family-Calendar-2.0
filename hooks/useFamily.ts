@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
-import { getFamilyMembers, removeFamilyMember, createFamily, generateInviteCode, joinFamily, getCurrentUserFamilyId } from '../services/family';
+import { getFamilyMembers, removeFamilyMember, createFamily, generateInviteCode, joinFamily, getCurrentUserFamilyId, addManagedFamilyMember } from '../services/family';
 import { useAuth } from './use-auth';
 import { AppErrorHandler } from '../utils/error-handler';
 
@@ -104,6 +104,24 @@ export function useJoinFamily() {
     onError: (error: Error) => {
       const appError = AppErrorHandler.handleError(error);
       Alert.alert('Error Joining Family', appError.message);
+    },
+  });
+}
+
+export function useAddManagedFamilyMember() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ familyId, firstName, lastName }: { familyId: string; firstName: string; lastName: string }) =>
+      addManagedFamilyMember(familyId, firstName, lastName),
+    onSuccess: () => {
+      // Refetch family members to update the list
+      queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Adding Member', appError.message);
     },
   });
 }

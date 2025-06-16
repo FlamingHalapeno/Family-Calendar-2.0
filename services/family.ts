@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { FamilyMember } from '../types/family';
+import { UserProfile } from '../types';
 
 export async function createFamily(userId: string, familyName: string, familyDescription: string): Promise<string> {
   if (!userId) {
@@ -211,5 +212,28 @@ export async function joinFamily(code: string, userId: string): Promise<string> 
   if (error) {
     throw new Error(error.message);
   }
+  return data;
+}
+
+export async function addManagedFamilyMember(
+  familyId: string,
+  firstName: string,
+  lastName: string
+): Promise<UserProfile> {
+  if (!familyId || !firstName || !lastName) {
+    throw new Error('Family ID, first name, and last name are required.');
+  }
+
+  const { data, error } = await supabase.rpc('create_managed_user_and_add_to_family', {
+    p_family_id: familyId,
+    p_first_name: firstName,
+    p_last_name: lastName,
+  });
+
+  if (error) {
+    console.error('Error adding managed family member:', error);
+    throw new Error(error.message);
+  }
+
   return data;
 }

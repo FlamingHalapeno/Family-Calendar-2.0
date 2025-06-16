@@ -1,5 +1,9 @@
 # Family Calendar 2.0
 
+npm start -c
+supabase start
+supabase stop
+
 A modern family calendar mobile app built with React Native, Expo, and Supabase.
 
 ## Features

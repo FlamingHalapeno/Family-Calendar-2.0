@@ -199,9 +199,13 @@ export async function generateInviteCode(familyId: string, creatorId: string): P
   return data;
 }
 
-export async function joinFamily(code: string): Promise<string> {
+export async function joinFamily(code: string, userId: string): Promise<string> {
+  if (!userId) {
+    throw new Error('User ID must be provided to join a family.');
+  }
   const { data, error } = await supabase.rpc('join_family_with_code', {
     p_code: code,
+    p_user_id: userId,
   });
 
   if (error) {

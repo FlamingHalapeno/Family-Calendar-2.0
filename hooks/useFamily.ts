@@ -95,7 +95,7 @@ export function useJoinFamily() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: (code: string) => joinFamily(code),
+    mutationFn: ({ code, userId }: { code: string; userId: string }) => joinFamily(code, userId),
     onSuccess: () => {
       // Invalidate queries to refetch family members after joining
       queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });

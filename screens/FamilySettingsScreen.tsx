@@ -12,9 +12,11 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useCreateFamily, useJoinFamily } from '../hooks/useFamily';
+import { useAuth } from '../hooks/use-auth';
 
 export function FamilySettingsScreen() {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [familyName, setFamilyName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -41,21 +43,23 @@ export function FamilySettingsScreen() {
   };
 
   const handleJoinFamily = () => {
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to join a family.');
+      return;
+    }
     if (!joinCode.trim() || joinCode.trim().length !== 5) {
       Alert.alert('Validation Error', 'Please enter a 5-digit family code.');
       return;
     }
     
-    joinFamilyMutation.mutate(joinCode.trim(), {
+    joinFamilyMutation.mutate({ code: joinCode.trim(), userId: user.id }, {
       onSuccess: () => {
         Alert.alert('Success', 'You have joined the family!');
         setShowJoinModal(false);
         setJoinCode('');
-        navigation.navigate('FamilyMembers' as never); // Navigate to see the new family
+        navigation.navigate('FamilyMembers' as never);
       },
       onError: (error) => {
-        // The hook's onError will already show an alert.
-        // You can add more specific logic here if needed.
         console.error(error);
       },
     });

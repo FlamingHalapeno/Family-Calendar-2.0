@@ -531,7 +531,8 @@ END;
 $$;
 
 -- Function for a user to join a family using a code
-CREATE OR REPLACE FUNCTION public.join_family_with_code(p_code TEXT)
+-- ======== THIS IS THE CORRECTED FUNCTION ========
+CREATE OR REPLACE FUNCTION public.join_family_with_code(p_code TEXT, p_user_id UUID) -- Changed: Added p_user_id
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -552,7 +553,7 @@ BEGIN
 
     -- Add the current user to the family
     INSERT INTO public.family_members (family_id, user_id, role)
-    VALUES (v_family_id, auth.uid(), 'member');
+    VALUES (v_family_id, p_user_id, 'member'); -- Changed: Replaced auth.uid() with p_user_id
 
     -- Delete the used invite code
     DELETE FROM public.family_invites WHERE id = v_invite_id;

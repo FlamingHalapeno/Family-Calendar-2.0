@@ -2,7 +2,6 @@
 -- Family Calendar 2.0 - Complete Supabase Setup (All Fixes Included)
 -- ===================================
 -- Run this script in your Supabase SQL editor to set up the complete database schema
--- Make sure to run the cleanup script first if your project is not empty
 -- This script enables RLS (Row Level Security) on all tables
 
 -- Enable UUID extension
@@ -469,8 +468,6 @@ END;
 $$;
 
 -- ========== NEW FUNCTION FOR CREATING FAMILIES ==========
--- This is the final, corrected version of the function.
--- It uses SECURITY DEFINER and accepts a user_id to avoid role/context issues.
 DROP FUNCTION IF EXISTS public.create_new_family(text, text);
 DROP FUNCTION IF EXISTS public.create_new_family(uuid, text, text);
 
@@ -499,9 +496,8 @@ BEGIN
     RETURN v_new_family_id;
 END;
 $$;
--- =======================================================
 
--- Function to generate a new invite code for a family (final corrected version)
+-- Function to generate a new invite code for a family
 DROP FUNCTION IF EXISTS public.generate_family_invite_code(UUID);
 CREATE OR REPLACE FUNCTION public.generate_family_invite_code(p_family_id UUID, p_creator_id UUID)
 RETURNS TEXT
@@ -531,8 +527,7 @@ END;
 $$;
 
 -- Function for a user to join a family using a code
--- ======== THIS IS THE CORRECTED FUNCTION ========
-CREATE OR REPLACE FUNCTION public.join_family_with_code(p_code TEXT, p_user_id UUID) -- Changed: Added p_user_id
+CREATE OR REPLACE FUNCTION public.join_family_with_code(p_code TEXT, p_user_id UUID)
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -553,7 +548,7 @@ BEGIN
 
     -- Add the current user to the family
     INSERT INTO public.family_members (family_id, user_id, role)
-    VALUES (v_family_id, p_user_id, 'member'); -- Changed: Replaced auth.uid() with p_user_id
+    VALUES (v_family_id, p_user_id, 'member');
 
     -- Delete the used invite code
     DELETE FROM public.family_invites WHERE id = v_invite_id;
@@ -564,7 +559,7 @@ $$;
 
 
 -- ===================================
--- TRIGGER FUNCTIONS
+-- TRIGGER FUNCTIONS AND TRIGGERS
 -- ===================================
 
 -- Function to handle profile creation
@@ -574,17 +569,19 @@ DECLARE
     v_first_name TEXT;
     v_last_name TEXT;
 BEGIN
-    -- Extract names from metadata
     v_first_name := NEW.raw_user_meta_data ->> 'first_name';
     v_last_name := NEW.raw_user_meta_data ->> 'last_name';
-
-    -- Create user profile only
     INSERT INTO public.users (id, email, first_name, last_name)
     VALUES (NEW.id, NEW.email, v_first_name, v_last_name);
-
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to create profile on user signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -595,47 +592,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ===================================
--- TRIGGERS
--- ===================================
-
--- Trigger to create profile on user signup
--- Drop trigger if it exists to avoid errors on re-run
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
 -- Add updated_at triggers to all tables
 DROP TRIGGER IF EXISTS handle_updated_at ON public.users;
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 DROP TRIGGER IF EXISTS handle_updated_at ON public.families;
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.families
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.families FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 DROP TRIGGER IF EXISTS handle_updated_at ON public.events;
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.events
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.events FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 DROP TRIGGER IF EXISTS handle_updated_at ON public.tasks;
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.tasks
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 DROP TRIGGER IF EXISTS handle_updated_at ON public.notes;
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.notes
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.notes FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 DROP TRIGGER IF EXISTS handle_updated_at ON public.contacts;
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.contacts
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.contacts FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 
 -- ===================================
 -- INDEXES FOR PERFORMANCE
 -- ===================================
-
--- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_family_members_family_id ON public.family_members(family_id);
 CREATE INDEX IF NOT EXISTS idx_family_members_user_id ON public.family_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_events_family_id ON public.events(family_id);

@@ -224,10 +224,9 @@ export async function addManagedFamilyMember(
     throw new Error('Family ID, first name, and last name are required.');
   }
 
-  const { data, error } = await supabase.rpc('create_managed_user_and_add_to_family', {
-    p_family_id: familyId,
-    p_first_name: firstName,
-    p_last_name: lastName,
+  // Call the Edge Function instead of an RPC
+  const { data, error } = await supabase.functions.invoke('create-managed-user', {
+    body: { family_id: familyId, first_name: firstName, last_name: lastName },
   });
 
   if (error) {

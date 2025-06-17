@@ -1,8 +1,9 @@
 # Family Calendar 2.0
 
 npm start -c
-supabase start
-supabase stop
+npx supabase start
+npx supabase stop
+View your local Supabase instance at http://localhost:54323.
 
 A modern family calendar mobile app built with React Native, Expo, and Supabase.
 

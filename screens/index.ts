@@ -2,6 +2,7 @@ export { CalendarScreen } from './CalendarScreen';
 export { ContactsScreen } from './ContactsScreen';
 export { FamilySettingsScreen } from './FamilySettingsScreen';
 export { FamilyMembersScreen } from './FamilyMembersScreen';
+export { FamilyMemberDetailScreen } from './FamilyMemberDetailScreen';
 export { LoginScreen } from './LoginScreen';
 export { NotesScreen } from './NotesScreen';
 export { SettingsScreen } from './SettingsScreen';

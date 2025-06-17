@@ -3,6 +3,7 @@
 npm start -c
 npx supabase start
 npx supabase stop
+npx supabase functions deploy
 View your local Supabase instance at http://localhost:54323.
 
 A modern family calendar mobile app built with React Native, Expo, and Supabase.

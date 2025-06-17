@@ -467,6 +467,26 @@ BEGIN
 END;
 $$;
 
+-- Function to remove a managed user completely (for Edge Functions)
+CREATE OR REPLACE FUNCTION remove_managed_user_completely(user_id_to_remove UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    user_deleted BOOLEAN := FALSE;
+BEGIN
+    -- First check if user exists in users table
+    IF EXISTS (SELECT 1 FROM public.users WHERE id = user_id_to_remove) THEN
+        -- Delete from users table
+        DELETE FROM public.users WHERE id = user_id_to_remove;
+        user_deleted := TRUE;
+    END IF;
+    
+    RETURN user_deleted;
+END;
+$$;
+
 -- ========== NEW FUNCTION FOR CREATING FAMILIES ==========
 DROP FUNCTION IF EXISTS public.create_new_family(text, text);
 DROP FUNCTION IF EXISTS public.create_new_family(uuid, text, text);
@@ -619,6 +639,89 @@ CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON public.tasks(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON public.tasks(due_date);
 CREATE INDEX IF NOT EXISTS idx_notes_family_id ON public.notes(family_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_family_id ON public.contacts(family_id);
+
+-- ===================================
+-- ROLE MANAGEMENT FUNCTIONS
+-- ===================================
+
+-- Function to promote a family member to admin
+CREATE OR REPLACE FUNCTION public.promote_family_member(p_member_user_id UUID, p_family_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_current_user_role TEXT;
+BEGIN
+    -- Check if the current user is an admin in the family
+    SELECT role INTO v_current_user_role
+    FROM public.family_members
+    WHERE family_id = p_family_id AND user_id = auth.uid();
+
+    IF v_current_user_role <> 'admin' THEN
+        RAISE EXCEPTION 'Only admins can promote family members.';
+    END IF;
+
+    -- Check if the member to be promoted exists in the family
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.family_members
+        WHERE family_id = p_family_id AND user_id = p_member_user_id
+    ) THEN
+        RAISE EXCEPTION 'User is not a member of this family.';
+    END IF;
+
+    -- Update the member's role to admin
+    UPDATE public.family_members
+    SET role = 'admin'
+    WHERE family_id = p_family_id AND user_id = p_member_user_id;
+END;
+$$;
+
+-- Function to demote a family member from admin to member
+CREATE OR REPLACE FUNCTION public.demote_family_member(p_member_user_id UUID, p_family_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_current_user_role TEXT;
+    v_admin_count INTEGER;
+BEGIN
+    -- Check if the current user is an admin in the family
+    SELECT role INTO v_current_user_role
+    FROM public.family_members
+    WHERE family_id = p_family_id AND user_id = auth.uid();
+
+    IF v_current_user_role <> 'admin' THEN
+        RAISE EXCEPTION 'Only admins can demote family members.';
+    END IF;
+
+    -- Check if the member to be demoted exists in the family and is an admin
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.family_members
+        WHERE family_id = p_family_id AND user_id = p_member_user_id AND role = 'admin'
+    ) THEN
+        RAISE EXCEPTION 'User is not an admin in this family.';
+    END IF;
+
+    -- Count the number of admins in the family
+    SELECT COUNT(*) INTO v_admin_count
+    FROM public.family_members
+    WHERE family_id = p_family_id AND role = 'admin';
+
+    -- Prevent demoting the last admin
+    IF v_admin_count <= 1 THEN
+        RAISE EXCEPTION 'Cannot demote the last admin in the family.';
+    END IF;
+
+    -- Update the member's role to member
+    UPDATE public.family_members
+    SET role = 'member'
+    WHERE family_id = p_family_id AND user_id = p_member_user_id;
+END;
+$$;
 
 -- ===================================
 -- SETUP COMPLETE

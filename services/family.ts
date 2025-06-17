@@ -236,3 +236,73 @@ export async function addManagedFamilyMember(
 
   return data;
 }
+
+export async function removeFamilyMemberAdvanced(
+  memberUserId: string,
+  familyId: string
+): Promise<{ success: boolean; managedAccountDeleted: boolean }> {
+  const { data, error } = await supabase.functions.invoke('remove-family-member', {
+    body: { memberUserId, familyId },
+  });
+
+  if (error) {
+    console.error('Error removing family member:', error);
+    throw new Error(error.message || 'Failed to remove family member');
+  }
+
+  return data;
+}
+
+export async function disbandFamily(familyId: string): Promise<{
+  success: boolean;
+  managedAccountsDeleted: number;
+  familyDeleted: boolean;
+}> {
+  const { data, error } = await supabase.functions.invoke('disband-family', {
+    body: { familyId },
+  });
+
+  if (error) {
+    console.error('Error disbanding family:', error);
+    throw new Error(error.message || 'Failed to disband family');
+  }
+
+  return data;
+}
+
+export async function leaveFamily(userId: string, familyId: string): Promise<void> {
+  const { error } = await supabase
+    .from('family_members')
+    .delete()
+    .eq('user_id', userId)
+    .eq('family_id', familyId);
+
+  if (error) {
+    console.error('Error leaving family:', error);
+    throw new Error(error.message || 'Failed to leave family');
+  }
+}
+
+export async function promoteFamilyMember(memberUserId: string, familyId: string): Promise<void> {
+  const { error } = await supabase.rpc('promote_family_member', {
+    p_member_user_id: memberUserId,
+    p_family_id: familyId,
+  });
+
+  if (error) {
+    console.error('Error promoting family member:', error);
+    throw new Error(error.message);
+  }
+}
+
+export async function demoteFamilyMember(memberUserId: string, familyId: string): Promise<void> {
+  const { error } = await supabase.rpc('demote_family_member', {
+    p_member_user_id: memberUserId,
+    p_family_id: familyId,
+  });
+
+  if (error) {
+    console.error('Error demoting family member:', error);
+    throw new Error(error.message);
+  }
+}

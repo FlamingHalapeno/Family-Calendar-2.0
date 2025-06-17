@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
-import { getFamilyMembers, removeFamilyMember, createFamily, generateInviteCode, joinFamily, getCurrentUserFamilyId, addManagedFamilyMember } from '../services/family';
+import { getFamilyMembers, removeFamilyMember, createFamily, generateInviteCode, joinFamily, getCurrentUserFamilyId, addManagedFamilyMember, removeFamilyMemberAdvanced, disbandFamily, leaveFamily, promoteFamilyMember, demoteFamilyMember } from '../services/family';
 import { useAuth } from './use-auth';
 import { AppErrorHandler } from '../utils/error-handler';
 
@@ -122,6 +122,107 @@ export function useAddManagedFamilyMember() {
     onError: (error: Error) => {
       const appError = AppErrorHandler.handleError(error);
       Alert.alert('Error Adding Member', appError.message);
+    },
+  });
+}
+
+export function useRemoveFamilyMemberAdvanced() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ memberUserId, familyId }: { memberUserId: string; familyId: string }) =>
+      removeFamilyMemberAdvanced(memberUserId, familyId),
+    onSuccess: () => {
+      // Refetch family members to update the list
+      queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Removing Member', appError.message);
+    },
+  });
+}
+
+export function useDisbandFamily() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ familyId }: { familyId: string }) => disbandFamily(familyId),
+    onSuccess: () => {
+      // Clear all family-related data from cache
+      queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['current-user-family-id', user?.id] });
+      // Could also clear other family-related queries like events, tasks, etc.
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Disbanding Family', appError.message);
+    },
+  });
+}
+
+export function useLeaveFamily() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ userId, familyId }: { userId: string; familyId: string }) =>
+      leaveFamily(userId, familyId),
+    onSuccess: () => {
+      // Clear family-related data from cache since user is no longer in family
+      queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['current-user-family-id', user?.id] });
+      // Clear other family-related queries as user no longer has access
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Leaving Family', appError.message);
+    },
+  });
+}
+
+export function usePromoteFamilyMember() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ memberUserId, familyId }: { memberUserId: string; familyId: string }) =>
+      promoteFamilyMember(memberUserId, familyId),
+    onSuccess: () => {
+      // Refetch family members to update the list
+      queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Promoting Member', appError.message);
+    },
+  });
+}
+
+export function useDemoteFamilyMember() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ memberUserId, familyId }: { memberUserId: string; familyId: string }) =>
+      demoteFamilyMember(memberUserId, familyId),
+    onSuccess: () => {
+      // Refetch family members to update the list
+      queryClient.invalidateQueries({ queryKey: ['family-members', user?.id] });
+    },
+    onError: (error: Error) => {
+      const appError = AppErrorHandler.handleError(error);
+      Alert.alert('Error Demoting Member', appError.message);
     },
   });
 }

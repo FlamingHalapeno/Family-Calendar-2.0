@@ -22,7 +22,7 @@ import { useAuth } from '../hooks/use-auth';
 export function FamilyMembersScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { data: familyMembers, isLoading, error } = useFamilyMembers();
+  const { data: familyMembers, isLoading, error, refetch } = useFamilyMembers();
   const { data: familyId } = useCurrentUserFamilyId();
   
   const [showAddModal, setShowAddModal] = useState(false);
@@ -36,6 +36,9 @@ export function FamilyMembersScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const addManagedMemberMutation = useAddManagedFamilyMember();
+  
+  // State for refresh
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleGenerateCode = async () => {
     if (!familyId || !user?.id) {
@@ -65,6 +68,15 @@ export function FamilyMembersScreen() {
     });
   };
   
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const openModal = () => {
     setInviteCode(null);
     setFirstName('');
@@ -74,7 +86,11 @@ export function FamilyMembersScreen() {
   };
 
   const renderMember = ({ item }: { item: FamilyMember }) => (
-    <View style={styles.memberCard}>
+    <TouchableOpacity 
+      style={styles.memberCard}
+      onPress={() => (navigation as any).navigate('FamilyMemberDetail', { member: item })}
+      activeOpacity={0.7}
+    >
       <View style={styles.memberInfo}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
@@ -85,11 +101,12 @@ export function FamilyMembersScreen() {
           <Text style={styles.memberName}>
             {item.first_name} {item.last_name}
           </Text>
-          <Text style={styles.memberEmail}>{item.email}</Text>
+          <Text style={styles.memberEmail}>{item.email || 'Managed Account'}</Text>
           <Text style={styles.memberRole}>{item.role}</Text>
         </View>
       </View>
-    </View>
+      <Text style={styles.chevron}>›</Text>
+    </TouchableOpacity>
   );
 
   if (isLoading) {
@@ -130,7 +147,20 @@ export function FamilyMembersScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>‹ Settings</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Family Members</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Family Members</Text>
+          <TouchableOpacity 
+            style={[styles.refreshButton, isRefreshing && styles.refreshButtonLoading]} 
+            onPress={handleRefresh}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.refreshButtonText}>↻</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.content}>
@@ -226,7 +256,18 @@ const styles = StyleSheet.create({
   header: { marginHorizontal: 20, marginTop: 10, marginBottom: 20 },
   backButton: { marginBottom: 10 },
   backButtonText: { fontSize: 17, color: '#007AFF' },
+  titleContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 34, fontWeight: 'bold', color: '#000000' },
+  refreshButton: { 
+    backgroundColor: '#007AFF', 
+    borderRadius: 20, 
+    width: 40, 
+    height: 40, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  refreshButtonText: { fontSize: 18, color: '#FFFFFF', fontWeight: '600' },
+  refreshButtonLoading: { opacity: 0.6 },
   content: { paddingHorizontal: 20 },
   card: { backgroundColor: '#FFFFFF', borderRadius: 10, padding: 20, marginBottom: 20 },
   memberCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F2F2F7' },
@@ -261,4 +302,5 @@ const styles = StyleSheet.create({
   modalInput: { backgroundColor: '#F2F2F7', borderRadius: 8, padding: 15, fontSize: 16, marginBottom: 15 },
   switchModalViewButton: { marginTop: 12, padding: 4 },
   switchModalViewButtonText: { color: '#007AFF', textAlign: 'center', fontSize: 14 },
+  chevron: { fontSize: 18, color: '#C7C7CC', marginLeft: 10 },
 });

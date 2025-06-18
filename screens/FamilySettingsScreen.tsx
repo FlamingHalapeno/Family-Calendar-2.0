@@ -33,7 +33,7 @@ export function FamilySettingsScreen() {
       {
         onSuccess: () => {
           Alert.alert('Success', 'Family created successfully!');
-          navigation.goBack();
+          navigation.navigate('FamilyMembers' as never);
         },
         onError: (error) => {
           Alert.alert('Error Creating Family', error.message);

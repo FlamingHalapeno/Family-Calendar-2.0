@@ -195,55 +195,118 @@ export function FamilyMembersScreen() {
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Family Member</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Family Member</Text>
+              <TouchableOpacity 
+                style={styles.closeIcon}
+                onPress={() => setShowAddModal(false)}
+              >
+                <Text style={styles.closeIconText}>×</Text>
+              </TouchableOpacity>
+            </View>
 
             {modalView === 'invite' ? (
-              <>
-                <TouchableOpacity
-                  style={[styles.modalButton, generateInviteCodeMutation.isPending && styles.disabledButton]}
-                  onPress={handleGenerateCode}
-                  disabled={generateInviteCodeMutation.isPending}
-                >
-                  {generateInviteCodeMutation.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.modalButtonText}>Invite with Code</Text>}
-                </TouchableOpacity>
+              <View style={styles.modalBody}>
+                <View style={styles.optionCard}>
+                  <Text style={styles.optionIcon}>👥</Text>
+                  <Text style={styles.optionTitle}>Invite with Code</Text>
+                  <Text style={styles.optionDescription}>
+                    Generate a code for family members to join with their own account
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.primaryButton, generateInviteCodeMutation.isPending && styles.disabledButton]}
+                    onPress={handleGenerateCode}
+                    disabled={generateInviteCodeMutation.isPending}
+                  >
+                    {generateInviteCodeMutation.isPending ? 
+                      <ActivityIndicator color="#FFFFFF" size="small" /> : 
+                      <Text style={styles.primaryButtonText}>Generate Invite Code</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
 
                 {inviteCode && (
-                  <View style={styles.inviteCodeContainer}>
+                  <View style={styles.inviteCodeCard}>
                     <Text style={styles.inviteCodeLabel}>Share this code:</Text>
                     <View style={styles.codeBox}>
                       <Text style={styles.inviteCode}>{inviteCode}</Text>
-                      <TouchableOpacity onPress={() => { Clipboard.setString(inviteCode); Alert.alert("Copied!"); }}>
-                        <Text style={styles.copyButton}>COPY</Text>
+                      <TouchableOpacity 
+                        style={styles.copyButtonContainer}
+                        onPress={() => { 
+                          Clipboard.setString(inviteCode); 
+                          Alert.alert("Copied!", "Invite code copied to clipboard"); 
+                        }}
+                      >
+                        <Text style={styles.copyButton}>📋</Text>
                       </TouchableOpacity>
                     </View>
-                    <Text style={styles.expiresText}>This code expires in 24 hours.</Text>
+                    <Text style={styles.expiresText}>⏰ This code expires in 24 hours</Text>
                   </View>
                 )}
-                 <TouchableOpacity style={styles.switchModalViewButton} onPress={() => setModalView('manual')}>
-                  <Text style={styles.switchModalViewButtonText}>Add a member without an email instead?</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Text style={styles.modalSubtitle}>For members without an email, like children.</Text>
-                <TextInput style={styles.modalInput} placeholder="First Name" value={firstName} onChangeText={setFirstName} autoCapitalize="words" />
-                <TextInput style={styles.modalInput} placeholder="Last Name" value={lastName} onChangeText={setLastName} autoCapitalize="words" />
-                <TouchableOpacity
-                  style={[styles.modalButton, addManagedMemberMutation.isPending && styles.disabledButton]}
-                  onPress={handleAddManagedMember}
-                  disabled={addManagedMemberMutation.isPending}
-                >
-                  {addManagedMemberMutation.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.modalButtonText}>Add Member</Text>}
-                </TouchableOpacity>
-                 <TouchableOpacity style={styles.switchModalViewButton} onPress={() => setModalView('invite')}>
-                    <Text style={styles.switchModalViewButtonText}>Want to invite with a code instead?</Text>
-                </TouchableOpacity>
-              </>
-            )}
 
-            <TouchableOpacity style={styles.modalCancelButton} onPress={() => setShowAddModal(false)}>
-              <Text style={styles.modalCancelButtonText}>Close</Text>
-            </TouchableOpacity>
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.secondaryButton} 
+                  onPress={() => setModalView('manual')}
+                >
+                  <Text style={styles.secondaryButtonText}>Add Member Manually</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.modalBody}>
+                <View style={styles.optionCard}>
+                  <Text style={styles.optionIcon}>👶</Text>
+                  <Text style={styles.optionTitle}>Add Manually</Text>
+                  <Text style={styles.optionDescription}>
+                    For children or family members without email accounts
+                  </Text>
+                  <TextInput 
+                    style={styles.modalInput} 
+                    placeholder="First Name" 
+                    value={firstName} 
+                    onChangeText={setFirstName} 
+                    autoCapitalize="words"
+                    placeholderTextColor="#8E8E93"
+                  />
+                  <TextInput 
+                    style={styles.modalInput} 
+                    placeholder="Last Name" 
+                    value={lastName} 
+                    onChangeText={setLastName} 
+                    autoCapitalize="words"
+                    placeholderTextColor="#8E8E93"
+                  />
+                  <TouchableOpacity
+                    style={[styles.primaryButton, addManagedMemberMutation.isPending && styles.disabledButton]}
+                    onPress={handleAddManagedMember}
+                    disabled={addManagedMemberMutation.isPending}
+                  >
+                    {addManagedMemberMutation.isPending ? 
+                      <ActivityIndicator color="#FFFFFF" size="small" /> : 
+                      <Text style={styles.primaryButtonText}>Add Member</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.secondaryButton} 
+                  onPress={() => setModalView('invite')}
+                >
+                  <Text style={styles.secondaryButtonText}>Invite with Code Instead</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -284,23 +347,136 @@ const styles = StyleSheet.create({
   noMembersText: { color: '#6D6D72', textAlign: 'center', fontStyle: 'italic' },
   addButton: { backgroundColor: '#007AFF', borderRadius: 8, padding: 15, alignItems: 'center' },
   addButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 24, marginHorizontal: 20, width: '85%', maxWidth: 320 },
-  modalTitle: { fontSize: 18, fontWeight: '600', color: '#000000', textAlign: 'center', marginBottom: 20 },
-  modalButton: { backgroundColor: '#007AFF', borderRadius: 8, padding: 15, alignItems: 'center', marginBottom: 12 },
-  modalButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
-  modalCancelButton: { backgroundColor: '#F2F2F7', borderRadius: 8, padding: 15, alignItems: 'center', marginTop: 8 },
-  modalCancelButtonText: { color: '#007AFF', fontSize: 16, fontWeight: '600' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 16, 
+    marginHorizontal: 20, 
+    width: '85%', 
+    maxWidth: 380,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
+  },
+  modalTitle: { fontSize: 20, fontWeight: '600', color: '#000000' },
+  closeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeIconText: { fontSize: 20, color: '#8E8E93', fontWeight: '300' },
+  modalBody: { padding: 24 },
+  optionCard: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  optionIcon: { fontSize: 32, marginBottom: 12 },
+  optionTitle: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 6 },
+  optionDescription: { 
+    fontSize: 14, 
+    color: '#6D6D72', 
+    textAlign: 'center', 
+    marginBottom: 20, 
+    lineHeight: 20 
+  },
+  primaryButton: { 
+    backgroundColor: '#007AFF', 
+    borderRadius: 10, 
+    padding: 16, 
+    alignItems: 'center', 
+    width: '100%',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  primaryButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#007AFF',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    width: '100%',
+  },
+  secondaryButtonText: { color: '#007AFF', fontSize: 16, fontWeight: '600' },
   disabledButton: { backgroundColor: '#C7C7CC' },
-  inviteCodeContainer: { marginTop: 20, alignItems: 'center' },
-  inviteCodeLabel: { fontSize: 14, color: '#6D6D72', marginBottom: 8 },
-  codeBox: { backgroundColor: '#F2F2F7', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
-  inviteCode: { fontSize: 24, fontWeight: 'bold', letterSpacing: 3, color: '#000' },
-  copyButton: { fontSize: 14, fontWeight: '600', color: '#007AFF', marginLeft: 15 },
-  expiresText: { fontSize: 12, color: '#8E8E93', marginTop: 8 },
-  modalSubtitle: { fontSize: 14, color: '#6D6D72', textAlign: 'center', marginBottom: 20 },
-  modalInput: { backgroundColor: '#F2F2F7', borderRadius: 8, padding: 15, fontSize: 16, marginBottom: 15 },
-  switchModalViewButton: { marginTop: 12, padding: 4 },
-  switchModalViewButtonText: { color: '#007AFF', textAlign: 'center', fontSize: 14 },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E5E7',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '500',
+  },
+  inviteCodeCard: { 
+    backgroundColor: '#E3F2FD',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BBDEFB',
+  },
+  inviteCodeLabel: { fontSize: 14, color: '#1976D2', marginBottom: 12, fontWeight: '500' },
+  codeBox: { 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 10, 
+    paddingVertical: 12, 
+    paddingHorizontal: 16, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    width: '100%',
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    borderStyle: 'dashed',
+  },
+  inviteCode: { fontSize: 24, fontWeight: 'bold', letterSpacing: 4, color: '#007AFF', flex: 1, textAlign: 'center' },
+  copyButtonContainer: {
+    backgroundColor: '#007AFF',
+    borderRadius: 6,
+    padding: 8,
+    marginLeft: 12,
+  },
+  copyButton: { fontSize: 16 },
+  expiresText: { fontSize: 12, color: '#1976D2', marginTop: 8, fontWeight: '500' },
+  modalInput: { 
+    backgroundColor: '#FFFFFF', 
+    borderWidth: 1.5,
+    borderColor: '#E5E5E7',
+    borderRadius: 10, 
+    padding: 16, 
+    fontSize: 16, 
+    marginBottom: 16,
+    width: '100%',
+  },
   chevron: { fontSize: 18, color: '#C7C7CC', marginLeft: 10 },
 });

@@ -66,13 +66,75 @@ serve(async (req) => {
       throw membersError
     }
 
-    // Check each member to see if they're managed accounts and collect them
-    const managedUserIds: string[] = []
+    // Process each family member by calling remove-family-member logic for each
+    let managedAccountsDeleted = 0
     if (familyMembers) {
       for (const member of familyMembers) {
-        const { data: authUser } = await supabase.auth.admin.getUserById(member.user_id)
-        if (!authUser.user?.email) {
-          managedUserIds.push(member.user_id)
+        console.log('Processing family member:', member.user_id)
+        
+        // Check if the member is a managed account (exact same logic as remove-family-member)
+        let isManagedAccount = false
+        try {
+          const { data: authUser, error: getUserError } = await supabase.auth.admin.getUserById(member.user_id)
+          if (getUserError) {
+            console.error('Error getting user by ID:', getUserError)
+            // Continue anyway, we'll still try to remove them from family_members
+          } else {
+            // Check if email is empty OR starts with "managed.user." (our managed account pattern)
+            const email = authUser.user?.email || ''
+            isManagedAccount = !email || email.startsWith('managed.user.') || email.includes('@local.app')
+            console.log('Target user email:', email)
+            console.log('Target user managed status:', isManagedAccount)
+          }
+        } catch (adminError) {
+          console.error('Error checking if user is managed:', adminError)
+          // Continue anyway
+        }
+
+        // Remove from family_members table first
+        console.log('Removing from family_members table')
+        const { error: removeMemberError } = await supabase
+          .from('family_members')
+          .delete()
+          .eq('user_id', member.user_id)
+          .eq('family_id', familyId)
+
+        if (removeMemberError) {
+          console.error('Error removing family member:', removeMemberError)
+          // Continue with other members
+        } else {
+          console.log('Successfully removed from family_members')
+        }
+
+        // If it's a managed account, delete the user entirely
+        if (isManagedAccount) {
+          console.log('Deleting managed account')
+          
+          // Delete from auth.users first - this should cascade to users table if properly configured
+          console.log('Attempting to delete from auth.users first')
+          const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(member.user_id)
+          
+          if (deleteAuthError) {
+            console.error('Error deleting auth user:', deleteAuthError)
+            console.error('Full auth error details:', JSON.stringify(deleteAuthError, null, 2))
+          } else {
+            console.log('Successfully deleted managed user from auth.users')
+          }
+
+          // Now force delete from users table in case it didn't cascade
+          console.log('Force deleting from users table')
+          const { error: deleteUserError, count } = await supabase
+            .from('users')
+            .delete({ count: 'exact' })
+            .eq('id', member.user_id)
+
+          if (deleteUserError) {
+            console.error('Error force deleting user profile:', deleteUserError)
+            console.error('Full error details:', JSON.stringify(deleteUserError, null, 2))
+          } else {
+            console.log('Successfully force deleted user from users table, count:', count)
+            managedAccountsDeleted++
+          }
         }
       }
     }
@@ -128,35 +190,7 @@ serve(async (req) => {
       console.error('Error deleting family invites:', invitesError)
     }
 
-    // Delete all family members
-    const { error: removeMembersError } = await supabase
-      .from('family_members')
-      .delete()
-      .eq('family_id', familyId)
-
-    if (removeMembersError) {
-      throw removeMembersError
-    }
-
-    // Delete managed user accounts
-    for (const userId of managedUserIds) {
-      // Delete from users table
-      const { error: deleteUserError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId)
-
-      if (deleteUserError) {
-        console.error('Error deleting user profile:', deleteUserError)
-      }
-
-      // Delete from auth.users
-      const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(userId)
-      
-      if (deleteAuthError) {
-        console.error('Error deleting auth user:', deleteAuthError)
-      }
-    }
+    // Family members have already been removed individually above
 
     // Finally, delete the family itself
     const { error: deleteFamilyError } = await supabase
@@ -171,7 +205,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        managedAccountsDeleted: managedUserIds.length,
+        managedAccountsDeleted: managedAccountsDeleted,
         familyDeleted: true 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

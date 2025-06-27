@@ -1,7 +1,10 @@
 import * as React from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuthRequest } from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
+import * as AuthSession from 'expo-auth-session';
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -25,16 +28,44 @@ export function useGoogleAuth() {
     isAuthenticated: false,
   });
 
+  const isExpoGo = Constants.appOwnership === 'expo';
+
+  const redirectUri = React.useMemo(() => {
+    return makeRedirectUri({
+      // In Expo Go, `useProxy` must be true. In standalone, it must be false.
+      useProxy: isExpoGo,
+    } as any);
+  }, [isExpoGo]);
+
   const [request, response, promptAsync] = useAuthRequest({
-    iosClientId: Constants.expoConfig?.extra?.googleClientIdIOS,
-    androidClientId: Constants.expoConfig?.extra?.googleClientIdAndroid,
+    // In Expo Go, we must use the web client ID.
+    // In standalone apps, we use the respective native client IDs.
+    clientId: isExpoGo
+      ? Constants.expoConfig?.extra?.googleClientIdWeb
+      : Platform.select({
+          ios: Constants.expoConfig?.extra?.googleClientIdIos,
+          android: Constants.expoConfig?.extra?.googleClientIdAndroid,
+        }),
+    webClientId: Constants.expoConfig?.extra?.googleClientIdWeb,
     scopes: [
       'https://www.googleapis.com/auth/calendar.readonly',
       'https://www.googleapis.com/auth/calendar.events',
       'profile',
       'email',
     ],
+    redirectUri,
   });
+
+  // Debug logging
+  React.useEffect(() => {
+    if (request) {
+      console.log('--- Google Auth Debug Info ---');
+      console.log(`Running in: ${isExpoGo ? 'Expo Go' : 'Standalone'}`);
+      console.log('Using Redirect URI:', request.redirectUri);
+      console.log('Using Client ID:', request.clientId);
+      console.log('--- End Google Auth Debug Info ---');
+    }
+  }, [request, isExpoGo]);
 
   // Handle authentication response
   React.useEffect(() => {
@@ -62,11 +93,20 @@ export function useGoogleAuth() {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
+      // For the token exchange, we need to use the public-facing redirect URI if we're in Expo Go.
+      const redirectUriForTokenExchange = isExpoGo
+        ? `https://auth.expo.io/@${Constants.expoConfig?.owner}/${Constants.expoConfig?.slug}`
+        : request?.redirectUri;
+        
+      console.log(`Using redirect URI for token exchange: ${redirectUriForTokenExchange}`);
+
       // Call Supabase Edge Function to handle token exchange
       const { data, error } = await supabase.functions.invoke('link-google-account', {
-        body: { 
+        body: {
           authorization_code: code,
-          redirect_uri: request?.redirectUri,
+          redirect_uri: redirectUriForTokenExchange,
+          // If in Expo Go, the backend must use the WEB credentials.
+          platform: isExpoGo ? 'web' : Platform.OS,
         },
       });
 

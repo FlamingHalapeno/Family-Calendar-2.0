@@ -2,6 +2,7 @@
   "expo": {
     "name": "Family Calendar",
     "slug": "family-calendar",
+    "scheme": "com.familycalendar.app",
     "version": "1.0.0",
     "orientation": "default",
     "userInterfaceStyle": "light",
@@ -31,8 +32,9 @@
       "expo-web-browser"
     ],
     "extra": {
-      "googleClientIdIOS": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
-      "googleClientIdAndroid": "478638951794-u9g0bhprc5dnb9b0g0iqbv17ptp2an03.apps.googleusercontent.com",
+      "googleClientIdIos": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+      "googleClientIdAndroid": "478638951794-2gq60163q6oke3grd9rhjurmibrtnbu8.apps.googleusercontent.com",
+      "googleClientIdWeb": "478638951794-8sivoqish6c98bg5prq6fv3jt1o937mi.apps.googleusercontent.com",
       "supabaseUrl": "https://isyihkdpnlrpzqojvtyl.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeWloa2RwbmxycHpxb2p2dHlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NDg1NzAsImV4cCI6MjA2NTIyNDU3MH0.uuc6evidDzuZH_w8stwtoJzBQNpKRGPQgmMkf9UYvTM",
       "autoLogin": false,

@@ -4,12 +4,11 @@ import { corsHeaders } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
-const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
 
 interface RequestBody {
   authorization_code: string;
   redirect_uri: string;
+  platform: 'ios' | 'android' | 'web';
 }
 
 interface GoogleTokenResponse {
@@ -43,7 +42,7 @@ serve(async (req) => {
   }
 
   try {
-    const { authorization_code, redirect_uri }: RequestBody = await req.json();
+    const { authorization_code, redirect_uri, platform }: RequestBody = await req.json();
 
     if (!authorization_code) {
       return new Response(
@@ -54,6 +53,38 @@ serve(async (req) => {
         }
       );
     }
+
+    // --- Select Platform-Specific Google Credentials ---
+    let clientId: string | undefined;
+    let clientSecret: string | undefined;
+
+    switch (platform) {
+      case 'ios':
+        clientId = Deno.env.get('GOOGLE_CLIENT_ID_IOS');
+        clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET_IOS');
+        break;
+      case 'android':
+        clientId = Deno.env.get('GOOGLE_CLIENT_ID_ANDROID');
+        clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET_ANDROID');
+        break;
+      case 'web':
+      default:
+        clientId = Deno.env.get('GOOGLE_CLIENT_ID_WEB');
+        clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET_WEB');
+        break;
+    }
+
+    if (!clientId || !clientSecret) {
+      console.error(`Google credentials not found for platform: ${platform}`);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error: Google client credentials missing.' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    // --- End Selection ---
 
     // Get the authenticated user from the request
     const authHeader = req.headers.get('Authorization');
@@ -90,8 +121,8 @@ serve(async (req) => {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: googleClientId,
-        client_secret: googleClientSecret,
+        client_id: clientId,
+        client_secret: clientSecret,
         code: authorization_code,
         grant_type: 'authorization_code',
         redirect_uri: redirect_uri,

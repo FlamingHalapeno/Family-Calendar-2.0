@@ -21,19 +21,27 @@
       },
       "package": "com.familycalendar.app"
     },
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "extra": {
-      "eas": {
-        "projectId": "isyihkdpnlrpzqojvtyl"
-      },
+      "googleClientIdIOS": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+      "googleClientIdAndroid": "478638951794-u9g0bhprc5dnb9b0g0iqbv17ptp2an03.apps.googleusercontent.com",
       "supabaseUrl": "https://isyihkdpnlrpzqojvtyl.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeWloa2RwbmxycHpxb2p2dHlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NDg1NzAsImV4cCI6MjA2NTIyNDU3MH0.uuc6evidDzuZH_w8stwtoJzBQNpKRGPQgmMkf9UYvTM",
       "autoLogin": false,
       "testEmail": "JohnDoe@gmail.com",
-      "testPassword": "JohnDoe"
-    }
+      "testPassword": "JohnDoe",
+      "eas": {
+        "projectId": "b8a7c058-03c0-4e78-aed7-ff3ce541c014"
+      }
+    },
+    "owner": "flaminghalapeno"
   }
 }
